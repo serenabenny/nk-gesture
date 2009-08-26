@@ -1,0 +1,13 @@
+{
+   "name": "nkGestures",
+   "version": "1.0",
+   "description": "MouseGestures for Chrome By nk",
+   "background_page": "background.htm",
+   "content_scripts": [ {
+      "js": [ "nkGestures.js" ],
+      "css": [ "ChromeGestures.css" ],
+      "matches": [ "http://*/*", "https://*/*", "file://*/*", "ftp://*/*" ],
+      "permissions": [ "tabs" ],
+      "run_at": "document_start"
+   } ]
+}
