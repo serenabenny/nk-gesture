@@ -89,16 +89,14 @@ var nkGestures =
         // 	    lasttab	        : 
         function(connection) { connection.postMessage("do:lasttab");	}
 	),
-
 	init: 	function()
 	{
 		this.connection = chrome.extension.connect("nkGestures");
 		window.addEventListener('mousedown', 		this,	true);
-// 		window.addEventListener('mousemove', 		this,	true);
-// 		window.addEventListener('mouseup',			this,	true);
 		window.addEventListener('contextmenu',		this,	true);
 	},
 	
+
 	uninit: function()
 	{
 		window.removeEventListener("mousedown", 		this, true);
@@ -106,6 +104,8 @@ var nkGestures =
 		window.removeEventListener("mouseup", 			this, true);
 		window.removeEventListener("contextmenu", 		this, true);
 	},
+		
+
 	
 	handleEvent: function(event)
 	{
@@ -117,7 +117,6 @@ var nkGestures =
 					this.x = event.clientX; 
 					this.y = event.clientY;
 					this.connection.postMessage("begin");
-					window.removeEventListener("mousedown",     this,   true);
                     window.addEventListener('mousemove', 		this,	true);
                     window.addEventListener('mouseup',			this,	true);
 				} else
@@ -178,7 +177,9 @@ var nkGestures =
 				break;
 			case "mouseup":
 				if (event.button == 2 && this.isRightButtonDown)
-				{ 
+				{
+                    window.removeEventListener("mousemove", 		this, true);
+		            window.removeEventListener("mouseup", 			this, true); 
 					this.isRightButtonDown = false; 
 					if(this.directions.length)
 					{ 
@@ -206,14 +207,12 @@ var nkGestures =
 		}
 	},
 
+
 	stopGesture: function()
 	{
-		this.directions = '';
-		this.clearLines();
+		this.directions = '';		
 		this.lastDirection = null;
-		window.addEventListener('mousedown', 		this,	true);
-        window.removeEventListener("mousemove", 		this, true);
-		window.removeEventListener("mouseup", 			this, true);
+        this.clearLines();
 		this.connection.postMessage("Ready");
 	},
 		
@@ -254,6 +253,7 @@ var nkGestures =
 		g.stroke();
 	}
 };
+//监听端口接手用户自定义手势
 function string2array(string,array) {
     var i,j;
     j = 0;
@@ -267,8 +267,8 @@ function string2array(string,array) {
 	    j++;
 	    array[i] = temp;
 	}
-}
-//监听端口接手用户自定义手势
+};
+
 chrome.extension.onConnect.addListener(function (port) {
     if(port.name != "nkGesturesTab")
         return;
