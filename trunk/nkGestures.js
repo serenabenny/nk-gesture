@@ -1,186 +1,281 @@
-//by Niklen
-//¿É×Ô¶¨ÒåÊó±êÊÖÊÆ u,d,l,r ·Ö±ð¶ÔÓ¦ÉÏÏÂ×óÓÒ
-var pageUpGesture           = 'u'; //ÉÏ·­Ò³
-var pageDownGesture         = 'd'; //ÏÂ·­Ò³
-var newTabGesture           = 'lr'; //ÐÂ±êÇ©
-var closeTabGesture         = 'dr'; //¹Ø±Õ±êÇ©
-var historyBackGesture      = 'l'; //ºóÍË
-var historyForwardGesture   = 'r'; //Ç°½ø
-var refreshGesture          = 'ud'; //Ë¢ÐÂ
-var selectLeftGesture       = 'ul'; //Ç°Ò»¸ö±êÇ©
-var selectRightGesture      = 'ur'; //ºóÒ»¸ö±êÇ©
-var goTopGesture            = 'ru'; //µ½×î¶¥¶Ë
-var goBottonGesture         = 'rd'; //µ½×îµ×¶Ë
-
-var BTN_RIGHT = 2;
-var SENSITIVITY = 15; //×îÐ¡Æ«ÒÆÏñËØ ¿É×ÔÐÐµ÷Õû
-var startX;
-var startY;
-var gesture = "";
-var preventContextMenu = false;
-//open port to nkGestures extension
-var port = chrome.extension.connect('nkGestures');
-var alpha=1.0;
-
-function cancel (e)
+ï»¿//nkGestures Mouse Gesture for Chrome
+//by nk niklenxyz@gmail.com
+//This js use to handle mouse event and analyze mouse gestures
+//The control code will send to extension's ToolStrip
+var nkGestures = 
 {
-	if (e.preventDefault)
-	{
-		e.preventDefault ();
-	}
-	return false;
-}
+	Direction : { up:'U' , right:'R', down:'D',left:'L'},
+	directions : '',
+	lastDirection : null,
+	x : 0,
+	y : 0,
+	isRightButtonDown : false,
+	isRightClickDisable : false,
+	connection : null,
 
-function getCookie(c_name)
-{
-if (document.cookie.length>0)
-  {
-  c_start=document.cookie.indexOf(c_name + "=");
-  if (c_start!=-1)
-    { 
-    c_start=c_start + c_name.length+1 ;
-    c_end=document.cookie.indexOf(";",c_start);
-    if (c_end==-1) c_end=document.cookie.length
-    return unescape(document.cookie.substring(c_start,c_end));
-    } 
-  }
-return ""
-}
-
-document.addEventListener ('dragover', cancel, false);
-document.addEventListener ('dragenter', cancel, false);
-
-document.addEventListener ('drop', function (e)
-{
-	// stops the browser from redirecting off to the text.
-	if (e.preventDefault) e.preventDefault ();
-
-	var link = e.dataTransfer.getData('Text');
-	if (link.indexOf ('http://') < 0)
-	{
-		link = 'http://www.google.cn/search?aq=f&ie=UTF-8&q=' + link;
-	}	
-	//var port = chrome.extension.connect('nkGestures');
+    actionsConfig : 
+    new Array(
+	    //newtab	        : 
+	    "U",
+	    //close           : 
+	    "DR",
+	    //goback	        : 
+	    "L",
+	    //goforward		: 
+	    "R",
+	    //stop		    : 
+	    "D",
+	    //reload	        : 
+	    "UD",
+	    //refresh         : 
+	    "RD",
+	    //righttab	    : 
+	    "UR",
+	    //lefttab	        : 
+	    "UL",
+	    //firsttab	    : 
+	    "LU",
+	    //lasttab	        : 
+	    "RU"
+    ),
 	
-	//send drag event data text
-	port.postMessage({message: 'tab', values: link});
-	return false;
+    actionNames :
+		new Array(
+		//newtab			: 
+		"æ–°æ ‡ç­¾",
+		//close			: 
+		"å…³æ ‡ç­¾",
+		//back			: 
+		"åŽé€€",
+		//forward		    : 
+		"å‰è¿›",
+		//stop			: 
+		"åœæ­¢",
+		//reload		    : 
+		"é‡è½½",		
+		//reload		    : 
+		"åˆ·æ–°",
+		//righttab		: 
+		"å³æ ‡ç­¾",
+	    //lefttab		    : 
+	    "å·¦æ ‡ç­¾",
+		//firsttab		: 
+		"å‰ç«¯æ ‡ç­¾",
+		//lasttab		    : 
+		"åŽç«¯æ ‡ç­¾"		
+	),	
+	actions :
+	new Array(
+        // 		newtab	        : 
+        function(connection) { connection.postMessage("do:newtab"); 	},
+        // 	    close           : 
+        function(connection) { connection.postMessage("do:close"); 	},
+        // 	    goback	        : 
+        function(connection) { history.back(); 						},
+        // 	    goforward		: 
+        function(connection) { history.forward(); 					},
+        // 	    stop		    : 
+        function(connection) { stop(); 								},
+        // 	    reload	        : 
+        function(connection) { window.location.reload(true);          },
+        // 	    refresh         : 
+        function(connection) { window.location.reload();              },
+        // 	    righttab	    : 
+        function(connection) { connection.postMessage("do:righttab");	},
+        // 	    lefttab	        : 
+        function(connection) { connection.postMessage("do:lefttab");	},
+        // 	    firsttab	    : 
+        function(connection) { connection.postMessage("do:firsttab");	},
+        // 	    lasttab	        : 
+        function(connection) { connection.postMessage("do:lasttab");	}
+	),
+
+	init: 	function()
+	{
+		this.connection = chrome.extension.connect("nkGestures");
+		window.addEventListener('mousedown', 		this,	true);
+// 		window.addEventListener('mousemove', 		this,	true);
+// 		window.addEventListener('mouseup',			this,	true);
+		window.addEventListener('contextmenu',		this,	true);
+	},
+	
+	uninit: function()
+	{
+		window.removeEventListener("mousedown", 		this, true);
+		window.removeEventListener("mousemove", 		this, true);
+		window.removeEventListener("mouseup", 			this, true);
+		window.removeEventListener("contextmenu", 		this, true);
+	},
+	
+	handleEvent: function(event)
+	{
+		switch (event.type) {
+			case "mousedown":
+				if (event.button == 2) 
+				{
+					this.isRightButtonDown = true; 
+					this.x = event.clientX; 
+					this.y = event.clientY;
+					this.connection.postMessage("begin");
+					window.removeEventListener("mousedown",     this,   true);
+                    window.addEventListener('mousemove', 		this,	true);
+                    window.addEventListener('mouseup',			this,	true);
+				} else
+				{
+					this.stopGesture();
+				}
+				break;
+			case "mousemove":
+				if (this.isRightButtonDown)
+				{ 
+					var tx		= event.clientX;
+					var ty 		= event.clientY;
+					var offsetX = tx - this.x;
+					var offsetY = ty - this.y;
+					var direction; 
+					var actname = null;
+					if (Math.pow(offsetX, 2) + Math.pow(offsetY, 2) > 100)
+					{
+						var tan = offsetY / offsetX;
+						if(Math.abs(offsetY) > Math.abs(offsetX))
+						{
+							if(offsetY < 0)
+							{
+								direction	= this.Direction.up;
+							} else
+							{
+								direction 	= this.Direction.down; 
+							}
+						} else
+						{
+							if(offsetX < 0)
+							{
+								direction = this.Direction.left;
+							} else
+							{
+								direction = this.Direction.right; 
+							}
+						}	
+						if(this.lastDirection != direction)
+						{
+							this.directions += direction;
+							this.lastDirection = direction;
+                            for(i = 0;i<this.actionsConfig.length;i++)
+						    {
+						        if(this.actionsConfig[i] == this.directions)
+						        {    
+						            actname = this.actionNames[i];
+						            break;
+						        }
+						    }
+						    this.connection.postMessage(this.directions + " : <b>" + actname + "</b>");
+						}
+						this.drawLine(this.x, this.y, tx, ty);
+						this.x = tx;
+						this.y = ty;
+					}
+				}
+				break;
+			case "mouseup":
+				if (event.button == 2 && this.isRightButtonDown)
+				{ 
+					this.isRightButtonDown = false; 
+					if(this.directions.length)
+					{ 
+						this.isRightClickDisable = true;
+						for(i = 0;i<this.actionsConfig.length;i++)
+						{
+						    if(this.actionsConfig[i] == this.directions)
+						    {
+						        this.actions[i](this.connection);						        						    
+						    }
+						}
+						this.stopGesture();
+					}
+				}
+				break;
+			case "contextmenu":
+				if(this.isRightClickDisable)
+				{
+					this.isRightClickDisable = false;
+					event.stopPropagation();
+					event.preventDefault(); 
+				}
+				this.connection.postMessage("Ready");
+				break;
+		}
+	},
+
+	stopGesture: function()
+	{
+		this.directions = '';
+		this.clearLines();
+		this.lastDirection = null;
+		window.addEventListener('mousedown', 		this,	true);
+        window.removeEventListener("mousemove", 		this, true);
+		window.removeEventListener("mouseup", 			this, true);
+		this.connection.postMessage("Ready");
+	},
+		
+	clearLines: function()
+	{
+		var canvas = document.getElementById('_drag_canvas');
+		if(canvas)
+		{
+			document.body.removeChild(canvas);
+		}
+	},
+
+	drawLine: function(x, y, tx, ty)
+	{
+		x 	+= pageXOffset ; 
+		tx 	+= pageXOffset ;
+		y 	+= pageYOffset;
+		ty 	+= pageYOffset;
+		var canvas = document.getElementById('_drag_canvas');
+		if(!canvas)
+		{
+			canvas = document.createElement('canvas');
+			canvas.id = '_drag_canvas';
+			canvas.width = document.width;
+			canvas.height = document.height;
+			canvas.style.position = 'absolute';
+			canvas.style.top = '0px';
+			canvas.style.left= '0px';
+			canvas.style.zIndex = "2147483647";
+			document.body.appendChild(canvas);
+		}
+		var g = canvas.getContext("2d");
+		g.lineWidth = 4;
+		g.strokeStyle = "blue";
+		g.beginPath( );              
+		g.moveTo(x,y);
+		g.lineTo(tx,ty);
+		g.stroke();
+	}
+};
+function string2array(string,array) {
+    var i,j;
+    j = 0;
+    for(i=0;i<array.length;i++)
+	{
+	    var temp = '';
+	    while (j<string.length && string[j]!=',') {
+	        temp += string[j];
+	        j++;
+	    }
+	    j++;
+	    array[i] = temp;
+	}
+}
+//ç›‘å¬ç«¯å£æŽ¥æ‰‹ç”¨æˆ·è‡ªå®šä¹‰æ‰‹åŠ¿
+chrome.extension.onConnect.addListener(function (port) {
+    if(port.name != "nkGesturesTab")
+        return;
+    port.onMessage.addListener(function (message) {
+        string2array(message,nkGestures.actionsConfig );
+    });
 });
-//¶¨Òå¶¯×÷
-function pageUpAction() {
-        window.scrollBy(0,45-window.innerHeight);
-}
-
-function pageDownAction() {
-        window.scrollBy(0,window.innerHeight-45);
-}
-
-function goBottonAction(){top.window.scrollBy(0,top.document.body.scrollHeight);window.scrollBy(0,document.body.scrollHeight);}
-
-function goTopAction(){top.window.scrollBy(0,-top.document.body.scrollHeight);window.scrollBy(0,-document.body.scrollHeight);}
-
-function historyBackAction() {
-        window.history.back();
-}
-
-function historyForwardAction() {
-        window.history.forward();
-}
-
-function refreshAction() {
-        window.location.reload(true);
-}
-
-var myGestures = [];
-myGestures[newTabGesture]           = "NT";
-myGestures[closeTabGesture]         = "CT";
-myGestures[historyBackGesture]      = historyBackAction;
-myGestures[historyForwardGesture]   = historyForwardAction;
-myGestures[refreshGesture]          = refreshAction;
-myGestures[pageUpGesture]           = pageUpAction;
-myGestures[pageDownGesture]         = pageDownAction;
-myGestures[goTopGesture]            = goTopAction;
-myGestures[goBottonGesture]         = goBottonAction;
-myGestures[selectLeftGesture]       = "LT";
-myGestures[selectRightGesture]      = "RT";
-
-function showGesture(move){
-        if (!document.getElementById("ChromeGestureBox")){
-                gestureDiv = document.createElement('div');
-                gestureDiv.id = "ChromeGestureBox";
-                gestureDiv.className = "gesture_"+move;
-                document.body.appendChild(gestureDiv);
-        } else {
-                document.getElementById("ChromeGestureBox").className="gesture_"+move;
-        }
-}
-
-function hideGesture(){
-        if(alpha>0){
-                alpha-=.1;
-                document.getElementById("ChromeGestureBox").style.opacity=alpha;
-                setTimeout(function(){hideGesture();},40); 
-        } else {
-                alpha=1.0;
-                document.getElementById("ChromeGestureBox").style.opacity=alpha;
-                document.getElementById("ChromeGestureBox").className="gesture_hide";
-        }
-}
-
-function mgMouseDown(e)
-{
-        if(e.button == BTN_RIGHT) {
-                startX = e.clientX;
-                startY = e.clientY;
-                gesture = "";
-                showGesture("click");
-                window.addEventListener("mousemove",mgMouseMove,true);
-                window.addEventListener("mouseup",mgMouseUp,true);
-        }
-}
-
-function mgMouseMove(e)
-{
-        checkMove(startY - e.clientY, 'u', e);
-        checkMove(e.clientX - startX, 'r', e);
-        checkMove(e.clientY - startY, 'd', e);
-        checkMove(startX - e.clientX, 'l', e);
-        showGesture(gesture[gesture.length-1]);
-}
-
-function checkMove(p, t, e)
-{
-        if (p >= SENSITIVITY) {
-                startX = e.clientX;
-                startY = e.clientY;
-                if (gesture[gesture.length-1] != t) {
-                        gesture += t;
-                }
-        }
-}
-
-function mgMouseUp(e)
-{
-        //alert(gesture);
-        preventContextMenu = false;
-        if (myGestures[gesture]) {               
-                preventContextMenu = true;
-                if ( myGestures[gesture] == "LT" || myGestures[gesture] == "RT" || myGestures[gesture] ==  "NT" || myGestures[gesture] ==  "CT" ) {
-                    port.postMessage({message: 'gestures', values: myGestures[gesture]});
-                }
-                else
-                    myGestures[gesture]();                 
-        }        
-        window.removeEventListener("mousemove",mgMouseMove,true);
-        window.removeEventListener("mouseup",mgMouseUp,true);
-        hideGesture();
-}
-
-function mgContextMenu(e)
-{
-    if(preventContextMenu)
-        e.preventDefault();
-}
-
-window.addEventListener("mousedown",mgMouseDown,true);
-window.addEventListener("contextmenu",mgContextMenu,true);
+//initialize nkGestures Object
+nkGestures.init();
+window.addEventListener("unload", function(){ nkGestures.uninit(); }, false);

@@ -1,0 +1,170 @@
+﻿<script>
+//nkToolStrip object 处理每个网页发送来的消息包括config.html的消息
+var nkToolStrip = {
+    gesturesName : "GesturesArray",
+    
+    open_to_right : false,
+    
+    actionsConfig : new Array(
+    //newtab	        : 
+    "DU",
+    //close           : 
+    "DR",
+    //goback	        : 
+    "L",
+    //goforward		: 
+    "R",
+    //stop		    : 
+    "D",
+    //reload	        : 
+    "UD",
+    //refresh         : 
+    "RD",
+    //righttab	    : 
+    "UR",
+    //lefttab	        : 
+    "UL",
+    //firsttab	    : 
+    "LU",
+    //lasttab	        : 
+    "RU"
+    ),
+   
+    getCookie : function(c_name)
+    {
+        if (document.cookie.length>0)
+        {
+            c_start=document.cookie.indexOf(c_name + "=");
+            if (c_start!=-1)
+            { 
+                c_start=c_start + c_name.length+1 ;
+                c_end=document.cookie.indexOf(";",c_start);
+                if (c_end==-1) c_end=document.cookie.length;
+                return unescape(document.cookie.substring(c_start,c_end));
+            } 
+        }
+        return "";
+    },
+    
+    setCookie : function(c_name,value,expiredays)
+    {
+        var exdate=new Date();
+        exdate.setDate(exdate.getDate()+expiredays);
+        document.cookie=c_name+ "=" +escape(value)+((expiredays==null) ? "" : "; expires="+exdate.toGMTString());
+    },
+    
+    string2array : function(string,array) 
+    {
+        var i,j;
+        j = 0;
+        for(i=0;i<array.length;i++)
+	    {
+	        var temp = '';
+	        while (j<string.length && string[j]!=',') {
+	            temp += string[j];
+	            j++;
+	        }
+	        j++;
+	        array[i] = temp;
+	    }
+    },
+    
+    init : function () {
+        if (this.getCookie ('open_to_right') == 'enable') this.open_to_right = true;
+
+        var gestures = this.getCookie(this.gesturesName);
+        if (gestures) {
+            this.actionsConfig = gestures;
+        }else
+        {
+            this.setCookie(this.gesturesName,this.actionsConfig,365);
+        }
+    },
+    
+    refreshCookie : function () {
+        this.actionsConfig = this.getCookie(this.gesturesName);
+        if (this.getCookie ('open_to_right') == 'enable') this.open_to_right = true;
+        else this.open_to_right = false;
+    }    
+};
+
+nkToolStrip.init();
+
+chrome.extension.onConnect.addListener(
+	function(port)
+	{
+	    if(port.name != "nkGestures")
+	        return;
+		port.onMessage.addListener(
+			function(message)
+			{
+				chrome.windows.get(port.tab.windowId, 
+					function(curWnd)
+					{
+						switch(message)
+						{
+						case "do:newtab":
+						    if(nkToolStrip.open_to_right)
+							    chrome.tabs.create({'windowId':curWnd.id, 'index':port.tab.index + 1, 'url':'chrome://newtab/', 'selected':true});
+							else
+							    chrome.tabs.create({'windowId':curWnd.id, 'url':'chrome://newtab/', 'selected':true});							    
+							break;
+						case "do:close":
+							chrome.tabs.remove(port.tab.id);
+							break;
+						case "do:righttab":
+						case "do:lefttab":
+						case "do:lasttab":
+						case "do:firsttab":
+							chrome.tabs.getAllInWindow(curWnd.id, function(tabs)
+							{
+								for(var i = 0; i < tabs.length; i++)
+								{
+									if (tabs[i].id === port.tab.id)
+									{
+										var newtab;
+										switch(message)
+										{
+										case "do:righttab":
+											newtab = tabs[i+1] || tabs[0]; 
+											break;
+										case "do:lefttab":
+											newtab = tabs[i-1] || tabs[tabs.length-1]; 
+											break;
+										case "do:lasttab":
+											newtab = tabs[tabs.length-1]; 
+											break;
+										case "do:firsttab":
+											newtab = tabs[0]; 
+											break;
+										}
+										if (newtab)
+										{
+											chrome.tabs.update(newtab.id, {selected:true});
+										}
+										break;
+									}
+								}
+							});
+							break;
+						case "do:getcookie":
+						    nkToolStrip.refreshCookie();
+						    break;
+						default:
+							document.getElementById("dirs").innerHTML = message;
+							break;
+						}
+					}
+				);
+			}
+		);
+		//发送用户定义的手势到连接来的tabs
+        var connection = chrome.tabs.connect(port.tab.id,"nkGesturesTab");
+        connection.postMessage(nkToolStrip.actionsConfig);
+	}
+);
+</script>
+<div onclick="window.open ('config.htm')" class="toolstrip-button">
+  <img src="mouse.png"><span id="dirs">Ready</span>
+</div>
+
