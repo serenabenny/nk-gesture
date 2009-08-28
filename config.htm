@@ -13,6 +13,8 @@ var nkConfig = {
 
     opt_otr : {name: 'open_to_right', label: '在当前分页右侧打开新分页（默认在分页栏最右侧打开）'},
     
+    opt_oif : {name: 'open_in_front', label: '拖拽激活新标签'},
+    
     opt_odg : {name: 'isOpenDrag', label: '是否打开拖放'},
     
     txt_link : {name:'SearchEngine', label:'搜索引擎'},
@@ -37,10 +39,20 @@ var nkConfig = {
 		    "右标签",
 	        //lefttab		    : 
 	        "左标签",
+	        //lasttab		    : 
+		    "后端标签",
 		    //firsttab		: 
 		    "前端标签",
-		    //lasttab		    : 
-		    "后端标签"		
+		    "上翻页",
+		    "下翻页",
+		    "到最顶端",
+		    "到最底端",
+		    "关闭游览器",
+		    "关闭除当前标签页面外的所有标签",
+		    "关闭左边标签",
+		    "关闭右边标签",		    
+		    "当前标签打开主页",
+		    "恢复刚关闭标签"
 	    ),
 
     getCookie : function(c_name)
@@ -154,6 +166,7 @@ window.onload=function ()
 	config.innerHTML += '<label><center>nkGestures for Chrome by nk</center></label>'
 	config.innerHTML += nkConfig.writeOption (nkConfig.opt_odg);
 	config.innerHTML += nkConfig.writeOption (nkConfig.opt_otr);
+	config.innerHTML += nkConfig.writeOption (nkConfig.opt_oif);
     config.innerHTML += nkConfig.writeText (nkConfig.txt_link);
 	config.innerHTML += '<label>U,D,L,R 分别对应上下左右手势 可以随意组合填入文本框也可为空</label>'
 	config.innerHTML += nkConfig.writeGesturesText();
