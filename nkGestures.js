@@ -121,9 +121,10 @@ function uninit()
 
 function handleMousedown(event)
 {
+    console.log("down button:" + event.button );
 	if (event.button == 2) 
 	{
-	    console.log("down");
+	    
 //		isRightButtonDown = true; 
 		x = event.clientX; 
 		y = event.clientY;
@@ -192,9 +193,9 @@ function handleMousemove(event)
 }
 function handleMouseup(event)
 {    
+    console.log("up button:" + event.button );
 	if (event.button == 2 )
-	{
-	    console.log("up");
+	{	    
         window.removeEventListener("mousemove", handleMousemove, true);
         window.removeEventListener("mouseup", handleMouseup, true); 
 //		isRightButtonDown = false; 
