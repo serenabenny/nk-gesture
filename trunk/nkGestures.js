@@ -121,9 +121,9 @@ function uninit()
 
 function handleMousedown(event)
 {
-    console.log("down");
 	if (event.button == 2) 
 	{
+	    console.log("down");
 //		isRightButtonDown = true; 
 		x = event.clientX; 
 		y = event.clientY;
@@ -191,10 +191,10 @@ function handleMousemove(event)
 //	}
 }
 function handleMouseup(event)
-{
-    console.log("up");
-//	if (event.button == 2 && isRightButtonDown)
-//	{        
+{    
+	if (event.button == 2 )
+	{
+	    console.log("up");
         window.removeEventListener("mousemove", handleMousemove, true);
         window.removeEventListener("mouseup", handleMouseup, true); 
 //		isRightButtonDown = false; 
@@ -211,7 +211,7 @@ function handleMouseup(event)
 			
 		}
 		stopGesture();
-//	}
+	}
 }
 function handleContextmenu(event)
 {
