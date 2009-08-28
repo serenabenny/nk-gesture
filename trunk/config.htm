@@ -13,6 +13,10 @@ var nkConfig = {
 
     opt_otr : {name: 'open_to_right', label: '在当前分页右侧打开新分页（默认在分页栏最右侧打开）'},
     
+    opt_odg : {name: 'isOpenDrag', label: '是否打开拖放'},
+    
+    txt_link : {name:'SearchEngine', label:'搜索引擎'},
+    
     actionNames :
 	    new Array(
 		    //newtab			: 
@@ -93,7 +97,20 @@ var nkConfig = {
 	    '/>' + option.label + '</label>';
     },
     
-    writeText : function ()
+    writeText : function (option) {
+        return '<label>' + '<input id="' + option.name + '" type="text" value="' + this.getCookie (option.name) +
+        '"/>' + option.label + '</label>';        
+    },
+    
+    saveText : function () {
+        var txt = document.getElementById(this.txt_link.name).value;
+        if (txt) {
+            this.setCookie(this.txt_link.name,unescape(txt),365);  
+        }
+        this.saveGesturesValue();              
+    },
+    
+    writeGesturesText : function ()
     {
 	    var html = '';
 	    var j = 0;
@@ -112,7 +129,7 @@ var nkConfig = {
 	    return html;
     },
     
-    saveTextValue : function()
+    saveGesturesValue : function()
     {
         var temp = new Array(this.actionNames.length);
         
@@ -135,10 +152,12 @@ window.onload=function ()
     nkConfig.init();
 	var config = document.getElementById ('config');
 	config.innerHTML += '<label><center>nkGestures for Chrome by nk</center></label>'
+	config.innerHTML += nkConfig.writeOption (nkConfig.opt_odg);
 	config.innerHTML += nkConfig.writeOption (nkConfig.opt_otr);
+    config.innerHTML += nkConfig.writeText (nkConfig.txt_link);
 	config.innerHTML += '<label>U,D,L,R 分别对应上下左右手势 可以随意组合填入文本框也可为空</label>'
-	config.innerHTML += nkConfig.writeText();
-	config.innerHTML += '<input type="button" id="submit1" onclick="nkConfig.saveTextValue()" value="OK"> <input type="button" id="submit2" onclick="window.close()" value="Close">';
+	config.innerHTML += nkConfig.writeGesturesText();
+	config.innerHTML += '<input type="button" id="submit1" onclick="nkConfig.saveText()" value="OK"> <input type="button" id="submit2" onclick="window.close()" value="Close">';
 };
 </script>
 <style>

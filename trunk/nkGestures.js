@@ -1,276 +1,298 @@
-﻿//nkGestures Mouse Gesture for Chrome 
-//Copyright (C) 2009  CJvoid, Niklen, BugVuln
-// 
-//This program is free software: you can redistribute it and/or modify
-//it under the terms of the GNU General Public License as published by
-//the Free Software Foundation, either version 3 of the License, or
-//(at your option) any later version.
-// 
-//This program is distributed in the hope that it will be useful,
-//but WITHOUT ANY WARRANTY; without even the implied warranty of
-//MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//GNU General Public License for more details.
-// 
-//You should have received a copy of the GNU General Public License
-//along with this program.  If not, see <http://www.gnu.org/licenses/>.
+﻿﻿//nkGestures Mouse Gesture for Chrome  
+//Copyright (C) 2009  CJvoid, Niklen, BugVuln 
+//  
+//This program is free software: you can redistribute it and/or modify 
+//it under the terms of the GNU General Public License as published by 
+//the Free Software Foundation, either version 3 of the License, or 
+//(at your option) any later version. 
+//  
+//This program is distributed in the hope that it will be useful, 
+//but WITHOUT ANY WARRANTY; without even the implied warranty of 
+//MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+//GNU General Public License for more details. 
+//  
+//You should have received a copy of the GNU General Public License 
+//along with this program.  If not, see <http://www.gnu.org/licenses/>.  
+ 
+//js by nk niklenxyz@gmail.com 
+//This js use to handle mouse event and analyze mouse gestures 
+//The control code will send to extension's ToolStrip 
+var nkGestures = 
+{
+	Direction : { up:'U' , right:'R', down:'D',left:'L'},
+	directions : '',
+	lastDirection : null,
+	x : 0,
+	y : 0,
+	isRightButtonDown : false,
+	isRightClickDisable : false,
+	connection : null,
+	isOpenDrag : false,
 
-
-//js by nk niklenxyz@gmail.com
-//This js use to handle mouse event and analyze mouse gestures
-//The control code will send to extension's ToolStrip
-
-Direction = { up:'U' , right:'R', down:'D',left:'L'};
-directions = "";
-lastDirection = "";
-x = 0;
-y = 0;
-isRightButtonDown = false;
-isRightClickDisable = false;
-connection = null;
-
-actionsConfig =  new Array(
-    //newtab	        : 
-    "U",
-    //close           : 
-    "DR",
-    //goback	        : 
-    "L",
-    //goforward		: 
-    "R",
-    //stop		    : 
-    "D",
-    //reload	        : 
-    "UD",
-    //refresh         : 
-    "RD",
-    //righttab	    : 
-    "UR",
-    //lefttab	        : 
-    "UL",
-    //firsttab	    : 
-    "LU",
-    //lasttab	        : 
-    "RU"
-);
-
-actionNames =
+    actionsConfig : 
+    new Array(
+	    //newtab	        : 
+	    "U",
+	    //close           : 
+	    "DR",
+	    //goback	        : 
+	    "L",
+	    //goforward		: 
+	    "R",
+	    //stop		    : 
+	    "D",
+	    //reload	        : 
+	    "UD",
+	    //refresh         : 
+	    "RD",
+	    //righttab	    : 
+	    "UR",
+	    //lefttab	        : 
+	    "UL",
+	    //firsttab	    : 
+	    "LU",
+	    //lasttab	        : 
+	    "RU"
+    ),
+	
+    actionNames :
+		new Array(
+		//newtab			: 
+		"新标签",
+		//close			: 
+		"关标签",
+		//back			: 
+		"后退",
+		//forward		    : 
+		"前进",
+		//stop			: 
+		"停止",
+		//reload		    : 
+		"重载",		
+		//reload		    : 
+		"刷新",
+		//righttab		: 
+		"右标签",
+	    //lefttab		    : 
+	    "左标签",
+		//firsttab		: 
+		"前端标签",
+		//lasttab		    : 
+		"后端标签"		
+	),	
+	actions :
 	new Array(
-	//newtab			: 
-	"新标签",
-	//close			: 
-	"关标签",
-	//back			: 
-	"后退",
-	//forward		    : 
-	"前进",
-	//stop			: 
-	"停止",
-	//reload		    : 
-	"重载",		
-	//reload		    : 
-	"刷新",
-	//righttab		: 
-	"右标签",
-    //lefttab		    : 
-    "左标签",
-	//firsttab		: 
-	"前端标签",
-	//lasttab		    : 
-	"后端标签"		
-);	
-actions = new Array(
-    // 		newtab	        : 
-    function(connection) { connection.postMessage("do:newtab"); 	},
-    // 	    close           : 
-    function(connection) { connection.postMessage("do:close"); 	},
-    // 	    goback	        : 
-    function(connection) { history.back(); 						},
-    // 	    goforward		: 
-    function(connection) { history.forward(); 					},
-    // 	    stop		    : 
-    function(connection) { stop(); 								},
-    // 	    reload	        : 
-    function(connection) { window.location.reload(true);          },
-    // 	    refresh         : 
-    function(connection) { window.location.reload();              },
-    // 	    righttab	    : 
-    function(connection) { connection.postMessage("do:righttab");	},
-    // 	    lefttab	        : 
-    function(connection) { connection.postMessage("do:lefttab");	},
-    // 	    firsttab	    : 
-    function(connection) { connection.postMessage("do:firsttab");	},
-    // 	    lasttab	        : 
-    function(connection) { connection.postMessage("do:lasttab");	}
-);
-
-function init()
-{
-	connection = chrome.extension.connect("nkGestures");
-	window.addEventListener("mousedown", 		handleMousedown,	true);
-	window.addEventListener("contextmenu",		handleContextmenu,	true);
-}
-
-function uninit()
-{
-	window.removeEventListener("mousedown", 		handleMousedown, true);
-	window.removeEventListener("mousemove", 		handleMousemove, true);
-	window.removeEventListener("mouseup", 			handleMouseup, true);
-	window.removeEventListener("contextmenu", 		handleContextmenu, true);
-}
-
-
-function handleMousedown(event)
-{
-    console.log("down button:" + event.button );
-	if (event.button == 2) 
+        // 		newtab	        : 
+        function(connection) { connection.postMessage("do:newtab"); 	},
+        // 	    close           : 
+        function(connection) { connection.postMessage("do:close"); 	},
+        // 	    goback	        : 
+        function(connection) { history.back(); 						},
+        // 	    goforward		: 
+        function(connection) { history.forward(); 					},
+        // 	    stop		    : 
+        function(connection) { stop(); 								},
+        // 	    reload	        : 
+        function(connection) { window.location.reload(true);          },
+        // 	    refresh         : 
+        function(connection) { window.location.reload();              },
+        // 	    righttab	    : 
+        function(connection) { connection.postMessage("do:righttab");	},
+        // 	    lefttab	        : 
+        function(connection) { connection.postMessage("do:lefttab");	},
+        // 	    firsttab	    : 
+        function(connection) { connection.postMessage("do:firsttab");	},
+        // 	    lasttab	        : 
+        function(connection) { connection.postMessage("do:lasttab");	}
+	),
+	init: 	function()
 	{
-	    
-//		isRightButtonDown = true; 
-		x = event.clientX; 
-		y = event.clientY;
-		connection.postMessage("begin");		
-        window.addEventListener("mousemove", handleMousemove, true);
-        window.addEventListener("mouseup", handleMouseup, true);
-	} 
-	else
-	{
-		stopGesture();
-	}
+		this.connection = chrome.extension.connect("nkGestures");
+		window.addEventListener('mousedown', 		this,	true);
+		window.addEventListener('contextmenu',		this,	true);
+		if (this.isOpenDrag) {
+            window.addEventListener ('drop',            this,   true); 
+		    window.addEventListener ('dragover',        this,   false); 
+		    window.addEventListener ('dragenter',       this,   false); 		    
+		}
+	},
 	
-}
-function handleMousemove(event)
-{
-    console.log("move");
-// 	if (isRightButtonDown)
-// 	{ 
-		var tx		= event.clientX;
-		var ty 		= event.clientY;
-		var offsetX = tx - x;
-		var offsetY = ty - y;
-		var direction; 
-		var actname = null;
-		if (Math.pow(offsetX, 2) + Math.pow(offsetY, 2) > 100)
-		{
-			var tan = offsetY / offsetX;
-			if(Math.abs(offsetY) > Math.abs(offsetX))
-			{
-				if(offsetY < 0)
+
+	uninit: function()
+	{
+		window.removeEventListener("mousedown", 		this, true);
+		window.removeEventListener("mousemove", 		this, true);
+		window.removeEventListener("mouseup", 			this, true);
+		window.removeEventListener("contextmenu", 		this, true);
+        if (this.isOpenDrag) {
+            window.removeEventListener ('drop',             this, true); 
+		    window.removeEventListener ('dragover',         this, false); 
+		    window.removeEventListener ('dragenter',        this, false); 
+		}
+	},
+		
+
+	
+	handleEvent: function(event)
+	{
+		switch (event.type) {
+			case "mousedown":
+				if (event.button == 2) 
 				{
-					direction	= Direction.up;
+					this.isRightButtonDown = true; 
+					this.x = event.clientX; 
+					this.y = event.clientY;
+					//this.connection.postMessage("begin");
+                    window.addEventListener('mousemove', 		this,	true);
+                    window.addEventListener('mouseup',			this,	true);
 				} else
 				{
-					direction 	= Direction.down; 
+					this.stopGesture();
 				}
-			} else
-			{
-				if(offsetX < 0)
-				{
-					direction = Direction.left;
-				} else
-				{
-					direction = Direction.right; 
+				break;
+			case "mousemove":
+				if (this.isRightButtonDown)
+				{ 
+					var tx		= event.clientX;
+					var ty 		= event.clientY;
+					var offsetX = tx - this.x;
+					var offsetY = ty - this.y;
+					var direction; 
+					var actname = null;
+					if (Math.pow(offsetX,2) + Math.pow(offsetY,2) > 25)
+					{
+						var tan = offsetY / offsetX;
+						if(Math.abs(offsetY) > Math.abs(offsetX))
+						{
+							if(offsetY < 0)
+							{
+								direction	= this.Direction.up;
+							} else
+							{
+								direction 	= this.Direction.down; 
+							}
+						} else
+						{
+							if(offsetX < 0)
+							{
+								direction = this.Direction.left;
+							} else
+							{
+								direction = this.Direction.right; 
+							}
+						}	
+						if(this.lastDirection != direction)
+						{
+						    this.isRightClickDisable = true;
+							this.directions += direction;
+							this.lastDirection = direction;
+                            for(i = 0;i<this.actionsConfig.length;i++)
+						    {
+						        if(this.actionsConfig[i] == this.directions)
+						        {    
+						            actname = this.actionNames[i];
+						            break;
+						        }
+						    }
+						    var msg = new Array("do:show", this.directions + " : <b>" + actname + "</b>");
+						    this.connection.postMessage(msg);
+						}
+						this.drawLine(this.x, this.y, tx, ty);
+						this.x = tx;
+						this.y = ty;
+					}
 				}
-			}	
-			if(lastDirection != direction)
-			{
-				directions += direction;
-				lastDirection = direction;
-                for(i = 0;i<actionsConfig.length;i++)
-			    {
-			        if(actionsConfig[i] == directions)
-			        {    
-			            actname = actionNames[i];
-			            break;
-			        }
-			    }
-			    connection.postMessage(directions + " : <b>" + actname + "</b>");
-			}
-			drawLine(x, y, tx, ty);
-			x = tx;
-			y = ty;
+				break;
+			case "mouseup":
+				if (event.button == 2 && this.isRightButtonDown)
+				{
+                    window.removeEventListener("mousemove", 		this, true);
+		            window.removeEventListener("mouseup", 			this, true); 
+					this.isRightButtonDown = false; 
+					if(this.directions.length)
+					{						
+						for(i = 0;i<this.actionsConfig.length;i++)
+						{
+						    if(this.actionsConfig[i] == this.directions)
+						    {
+						        this.actions[i](this.connection);						        						    
+						    }
+						}						
+					}
+					this.stopGesture();
+				}
+				break;
+			case "contextmenu":
+				if(this.isRightClickDisable)
+				{
+					this.isRightClickDisable = false;
+					event.stopPropagation();
+					event.preventDefault(); 
+				}
+				//this.connection.postMessage("Ready");
+				break;
+			case "drop":
+			    if (event.preventDefault) event.preventDefault ();          
+			    var link = event.dataTransfer.getData('Text');
+			    this.connection.postMessage("do:drag", link );	     
+				break;
+			case "dragover":
+			case "dragenter":
+                if (event.preventDefault)
+                {
+                    event.preventDefault();
+                }
+			    break;
 		}
-//	}
-}
-function handleMouseup(event)
-{    
-    console.log("up button:" + event.button );
-	if (event.button == 2 )
-	{	    
-        window.removeEventListener("mousemove", handleMousemove, true);
-        window.removeEventListener("mouseup", handleMouseup, true); 
-//		isRightButtonDown = false; 
-		if(directions.length)
+	},
+
+
+	stopGesture: function()
+	{
+		this.directions = '';		
+		this.lastDirection = null;
+        this.clearLines();
+		this.connection.postMessage(new Array("do:show", "Ready"));
+	},
+		
+	clearLines: function()
+	{
+		var canvas = document.getElementById('_drag_canvas');
+		if(canvas)
 		{
-		    isRightClickDisable = true;	
-			for(i = 0;i<actionsConfig.length;i++)
-			{
-			    if(actionsConfig[i] == directions)
-			    {
-			        actions[i](connection);						        						    
-			    }
-			}
-			
+			document.body.removeChild(canvas);
 		}
-		stopGesture();
-	}
-}
-function handleContextmenu(event)
-{
-	if(isRightClickDisable)
+	},
+
+	drawLine: function(x, y, tx, ty)
 	{
-		isRightClickDisable = false;
-		event.preventDefault(); 
+		x 	+= pageXOffset ; 
+		tx 	+= pageXOffset ;
+		y 	+= pageYOffset;
+		ty 	+= pageYOffset;
+		var canvas = document.getElementById('_drag_canvas');
+		if(!canvas)
+		{
+			canvas = document.createElement('canvas');
+			canvas.id = '_drag_canvas';
+			canvas.width = document.width;
+			canvas.height = document.height;
+			canvas.style.position = 'absolute';
+			canvas.style.top = '0px';
+			canvas.style.left= '0px';
+			canvas.style.zIndex = "2147483647";
+			document.body.appendChild(canvas);
+		}
+		var g = canvas.getContext("2d");
+		g.lineWidth = 4;
+		g.strokeStyle = "blue";
+		g.beginPath( );              
+		g.moveTo(x,y);
+		g.lineTo(tx,ty);
+		g.stroke();
 	}
-	connection.postMessage("Ready");
-}
-
-
-function stopGesture()
-{
-	directions = "";		
-	lastDirection = "";
-    clearLines();
-	connection.postMessage("Ready");
-}
-	
-function clearLines()
-{
-	var canvas = document.getElementById('_drag_canvas');
-	if(canvas)
-	{
-		document.body.removeChild(canvas);
-	}
-}
-
-function drawLine(x, y, tx, ty)
-{
-	x 	+= pageXOffset ; 
-	tx 	+= pageXOffset ;
-	y 	+= pageYOffset;
-	ty 	+= pageYOffset;
-	var canvas = document.getElementById('_drag_canvas');
-	if(!canvas)
-	{
-		canvas = document.createElement('canvas');
-		canvas.id = '_drag_canvas';
-		canvas.width = document.width;
-		canvas.height = document.height;
-		canvas.style.position = 'absolute';
-		canvas.style.top = '0px';
-		canvas.style.left= '0px';
-		canvas.style.zIndex = "2147483647";
-		document.body.appendChild(canvas);
-	}
-	var g = canvas.getContext("2d");
-	g.lineWidth = 4;
-	g.strokeStyle = "blue";
-	g.beginPath( );              
-	g.moveTo(x,y);
-	g.lineTo(tx,ty);
-	g.stroke();
-}
-
-
+};
+//监听端口接手用户自定义手势
 function string2array(string,array) {
     var i,j;
     j = 0;
@@ -285,16 +307,19 @@ function string2array(string,array) {
 	    array[i] = temp;
 	}
 }
-//监听端口接收用户自定义手势
+
 chrome.extension.onConnect.addListener(function (port) {
     if(port.name != "nkGesturesTab")
         return;
     port.onMessage.addListener(function (message) {
-        string2array(message,actionsConfig );
+        if ( message == "OpenDrag" ) {
+            nkGestures.isOpenDrag = true;
+        }
+        else{
+            string2array(message,nkGestures.actionsConfig );
+        }     
     });
 });
 //initialize nkGestures Object
-connection = chrome.extension.connect("nkGestures");
-window.addEventListener("mousedown", 		handleMousedown,	true);
-window.addEventListener("contextmenu",		handleContextmenu,	true);
-//window.addEventListener("unload", function(){ uninit(); }, false);
+nkGestures.init();
+window.addEventListener("unload", function(){ nkGestures.uninit(); }, false);
