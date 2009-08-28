@@ -52,34 +52,54 @@ var nkGestures =
 	    //firsttab	    : 
 	    "LU",
 	    //lasttab	        : 
-	    "RU"
+	    "RU",
+	    "",
+	    "",
+	    "",
+	    "",
+	    "",
+	    "",
+	    "",
+	    "",
+	    "",
+	    ""
     ),
 	
     actionNames :
-		new Array(
-		//newtab			: 
-		"新标签",
-		//close			: 
-		"关标签",
-		//back			: 
-		"后退",
-		//forward		    : 
-		"前进",
-		//stop			: 
-		"停止",
-		//reload		    : 
-		"重载",		
-		//reload		    : 
-		"刷新",
-		//righttab		: 
-		"右标签",
-	    //lefttab		    : 
-	    "左标签",
-		//firsttab		: 
-		"前端标签",
-		//lasttab		    : 
-		"后端标签"		
-	),	
+	    new Array(
+		    //newtab			: 
+		    "新标签",
+		    //close			: 
+		    "关标签",
+		    //back			: 
+		    "后退",
+		    //forward		    : 
+		    "前进",
+		    //stop			: 
+		    "停止",
+		    //reload		    : 
+		    "重载",		
+		    //reload		    : 
+		    "刷新",
+		    //righttab		: 
+		    "右标签",
+	        //lefttab		    : 
+	        "左标签",
+	        //lasttab		    : 
+		    "后端标签",
+		    //firsttab		: 
+		    "前端标签",
+		    "上翻页",
+		    "下翻页",
+		    "到最顶端",
+		    "到最底端",
+		    "关游览器",
+		    "关全部标签除当前标签",
+		    "关左标签",
+		    "关右标签",
+		    "当前标签开主页",
+		    "恢复刚关闭标签"
+	    ),	
 	actions :
 	new Array(
         // 		newtab	        : 
@@ -103,18 +123,36 @@ var nkGestures =
         // 	    firsttab	    : 
         function(connection) { connection.postMessage("do:firsttab");	},
         // 	    lasttab	        : 
-        function(connection) { connection.postMessage("do:lasttab");	}
+        function(connection) { connection.postMessage("do:lasttab");	},
+        //      pageup
+        function(connection) { window.scrollBy(0,45-window.innerHeight);},
+        //      pagedown
+        function(connection) { window.scrollBy(0,window.innerHeight-45);},
+        //      gotop
+        function(connection) { top.window.scrollBy(0,-top.document.body.scrollHeight);window.scrollBy(0,-document.body.scrollHeight);},
+        //      gobotton
+        function(connection) { top.window.scrollBy(0,top.document.body.scrollHeight);window.scrollBy(0,document.body.scrollHeight);},
+        //      closeall
+        function(connection) { connection.postMessage("do:closeall");	},
+        //      closeonly
+        function(connection) { connection.postMessage("do:closeonly");	},
+        //      closeleft
+        function(connection) { connection.postMessage("do:closeleft");	},
+        //      closeright
+        function(connection) { connection.postMessage("do:closeright");	},
+        //      openindex
+        function(connection) { connection.postMessage("do:openindex");	},
+        //      restore
+        function(connection) { connection.postMessage("do:restore");	}
 	),
 	init: 	function()
 	{
 		this.connection = chrome.extension.connect("nkGestures");
 		window.addEventListener('mousedown', 		this,	true);
 		window.addEventListener('contextmenu',		this,	true);
-		if (this.isOpenDrag) {
-            window.addEventListener ('drop',            this,   true); 
-		    window.addEventListener ('dragover',        this,   false); 
-		    window.addEventListener ('dragenter',       this,   false); 		    
-		}
+        window.addEventListener ('drop',            this,   true); 
+	    window.addEventListener ('dragover',        this,   false); 
+	    window.addEventListener ('dragenter',       this,   false); 		    
 	},
 	
 
@@ -124,11 +162,9 @@ var nkGestures =
 		window.removeEventListener("mousemove", 		this, true);
 		window.removeEventListener("mouseup", 			this, true);
 		window.removeEventListener("contextmenu", 		this, true);
-        if (this.isOpenDrag) {
-            window.removeEventListener ('drop',             this, true); 
-		    window.removeEventListener ('dragover',         this, false); 
-		    window.removeEventListener ('dragenter',        this, false); 
-		}
+        window.removeEventListener ('drop',             this, true); 
+	    window.removeEventListener ('dragover',         this, false); 
+	    window.removeEventListener ('dragenter',        this, false); 
 	},
 		
 
@@ -215,7 +251,8 @@ var nkGestures =
 						{
 						    if(this.actionsConfig[i] == this.directions)
 						    {
-						        this.actions[i](this.connection);						        						    
+						        this.actions[i](this.connection);
+						        break;
 						    }
 						}						
 					}
@@ -232,12 +269,18 @@ var nkGestures =
 				//this.connection.postMessage("Ready");
 				break;
 			case "drop":
+			    if (!this.isOpenDrag) {
+			        break;
+			    }
 			    if (event.preventDefault) event.preventDefault ();          
-			    var link = event.dataTransfer.getData('Text');
-			    this.connection.postMessage("do:drag", link );	     
+			    var link = event.dataTransfer.getData("Text");
+			    this.connection.postMessage(new Array("do:drag", link));	     
 				break;
 			case "dragover":
 			case "dragenter":
+                if (!this.isOpenDrag) {
+			        break;
+			    }
                 if (event.preventDefault)
                 {
                     event.preventDefault();
@@ -257,7 +300,7 @@ var nkGestures =
 		
 	clearLines: function()
 	{
-		var canvas = document.getElementById('_drag_canvas');
+		var canvas = document.getElementById('_nk_drag_canvas');
 		if(canvas)
 		{
 			document.body.removeChild(canvas);
@@ -270,17 +313,17 @@ var nkGestures =
 		tx 	+= pageXOffset ;
 		y 	+= pageYOffset;
 		ty 	+= pageYOffset;
-		var canvas = document.getElementById('_drag_canvas');
+		var canvas = document.getElementById('_nk_drag_canvas');
 		if(!canvas)
 		{
 			canvas = document.createElement('canvas');
-			canvas.id = '_drag_canvas';
+			canvas.id = '_nk_drag_canvas';
 			canvas.width = document.width;
 			canvas.height = document.height;
 			canvas.style.position = 'absolute';
 			canvas.style.top = '0px';
 			canvas.style.left= '0px';
-			canvas.style.zIndex = "2147483647";
+			canvas.style.zIndex = "1000000";
 			document.body.appendChild(canvas);
 		}
 		var g = canvas.getContext("2d");
@@ -312,7 +355,7 @@ chrome.extension.onConnect.addListener(function (port) {
     if(port.name != "nkGesturesTab")
         return;
     port.onMessage.addListener(function (message) {
-        if ( message == "OpenDrag" ) {
+        if ( message == 'OpenDrag' ) {
             nkGestures.isOpenDrag = true;
         }
         else{

@@ -30,29 +30,30 @@ var nkToolStrip = {
     
     open_drag : false,
     
-    actionsConfig : new Array(
-    //newtab	        : 
-    "DU",
-    //close           : 
-    "DR",
-    //goback	        : 
-    "L",
-    //goforward		: 
-    "R",
-    //stop		    : 
-    "D",
-    //reload	        : 
-    "UD",
-    //refresh         : 
-    "RD",
-    //righttab	    : 
-    "UR",
-    //lefttab	        : 
-    "UL",
-    //firsttab	    : 
-    "LU",
-    //lasttab	        : 
-    "RU"
+    open_in_front : true,
+    
+    actionsConfig :     new Array(
+	    "U",
+	    "DR",
+	    "L",
+	    "R",
+	    "D",
+	    "UD",
+	    "RD",
+	    "UR",
+	    "UL",
+	    "LU",
+	    "RU",
+	    "",
+	    "",
+	    "",
+	    "",
+	    "",
+	    "",
+	    "",
+	    "",
+	    "",
+	    ""
     ),
    
     getCookie : function(c_name)
@@ -98,6 +99,8 @@ var nkToolStrip = {
         if (this.getCookie ('open_to_right') == 'enable') this.open_to_right = true;
         
         if (this.getCookie (this.open_drag_name) == 'enable') this.open_drag = true;
+        
+        if (this.getCookie ('open_to_right') == 'enable') this.open_drag = true;
 
         var gestures = this.getCookie(this.gesturesName);
         if (gestures) {
@@ -121,6 +124,8 @@ var nkToolStrip = {
         this.searchWeb = this.getCookie(this.searchWebName);
         if (this.getCookie ('open_to_right') == 'enable') this.open_to_right = true;
         else this.open_to_right = false;
+        if (this.getCookie ('open_in_front') == 'enable') this.open_in_front = true;
+        else this.open_in_front = false;
         if (this.getCookie (this.open_drag_name) == 'enable') this.open_drag = true;
         else this.open_drag = false;
     }    
@@ -136,95 +141,200 @@ chrome.extension.onConnect.addListener(
 		port.onMessage.addListener(
 			function(message)
 			{
-				chrome.windows.get(port.tab.windowId, 
-					function(curWnd)
-					{
-						if(message[1])
-						{
-						    switch(message[0]) {
-					        case "do:drag":
-						        var link = message[1];
-						        if (link.indexOf ('http://') < 0)
-						        {
-						            link = searchWeb + link;
-						        }
-						        if(nkToolStrip.open_to_right)
-							        chrome.tabs.create({'windowId':curWnd.id, 'index':port.tab.index + 1, 'url':message[1], 'selected':true});
-							    else
-							        chrome.tabs.create({'windowId':curWnd.id, 'url':link, 'selected':true});							    
-							    break;
-                    	    case "do:show":
-						        document.getElementById("dirs").innerHTML = message[1];	
-						    default:
-						        break;
-						    }
-						}
+			    switch(message[0]) 
+			    {
+		            case "do:drag":
+			            var link = message[1];
+			            if (link.indexOf ('http://') < 0)
+			            {
+			                link = nkToolStrip.searchWeb + link;
+			            }
+			            if(nkToolStrip.open_to_right)
+			                if(nkToolStrip.open_in_front)
+			                    chrome.tabs.create({'windowId':port.tab.windowId, 'index':port.tab.index + 1, 'url':link, 'selected':true});
+			                else
+			                    chrome.tabs.create({'windowId':port.tab.windowId, 'index':port.tab.index + 1, 'url':link, 'selected':false});						                
+				        else
+				            if(nkToolStrip.open_in_front)
+                                chrome.tabs.create({'windowId':port.tab.windowId, 'url':link, 'selected':true});
+                            else
+                                chrome.tabs.create({'windowId':port.tab.windowId, 'url':link, 'selected':false});							    
+				        break;
+        	        case "do:show":
+			            document.getElementById("dirs").innerHTML = message[1];
+			            break;
+			        default:
+			            break;
+			    }
 
-						switch(message)
-						{
-						case "do:newtab":
-						    if(nkToolStrip.open_to_right)
-							    chrome.tabs.create({'windowId':curWnd.id, 'index':port.tab.index + 1, 'url':'chrome://newtab/', 'selected':true});
-							else
-							    chrome.tabs.create({'windowId':curWnd.id, 'url':'chrome://newtab/', 'selected':true});							    
-							break;
-						case "do:close":
-							chrome.tabs.remove(port.tab.id);
-							break;
-						case "do:righttab":
-						case "do:lefttab":
-						case "do:lasttab":
-						case "do:firsttab":
-							chrome.tabs.getAllInWindow(curWnd.id, function(tabs)
-							{
-								for(var i = 0; i < tabs.length; i++)
-								{
-									if (tabs[i].id === port.tab.id)
-									{
-										var newtab;
-										switch(message)
-										{
-										case "do:righttab":
-											newtab = tabs[i+1] || tabs[0]; 
-											break;
-										case "do:lefttab":
-											newtab = tabs[i-1] || tabs[tabs.length-1]; 
-											break;
-										case "do:lasttab":
-											newtab = tabs[tabs.length-1]; 
-											break;
-										case "do:firsttab":
-											newtab = tabs[0]; 
-											break;
-										}
-										if (newtab)
-										{
-											chrome.tabs.update(newtab.id, {selected:true});
-											chrome.tabs.update(port.tab.id, {selected:false});
-										}
-										break;
-									}
-								}
-							});
-							break;
-						case "do:getcookie":
-						    nkToolStrip.refreshCookie();
-						    break;										    
-						default:							
-							break;
-						}
-					}
-				);
+				switch(message)
+				{
+				case "do:newtab":
+				    if(nkToolStrip.open_to_right)
+					    chrome.tabs.create({'windowId':port.tab.windowId, 'index':port.tab.index + 1, 'url':'chrome://newtab/', 'selected':true});
+					else
+					    chrome.tabs.create({'windowId':port.tab.windowId, 'url':'chrome://newtab/', 'selected':true});							    
+					break;
+                case "do:openindex":
+		            chrome.tabs.update(port.tab.id,{'url':'chrome://newtab/', 'selected':true});
+		            break;
+		        case "do:restore":
+		            capture = false;
+		            chrome.tabs.create({'windowId':port.tab.windowId, 'index':port.tab.index + 1, 'url':historyTabRemove.pop()[1], 'selected':true});
+		            capture = true;
+		            break;
+				case "do:close":
+				case "do:righttab":
+				case "do:lefttab":
+				case "do:lasttab":
+				case "do:firsttab":
+				case "do:closeall":
+				case "do:closeonly":
+				case "do:closeleft":
+				case "do:closeright":
+					chrome.tabs.getAllInWindow(port.tab.windowId, function(tabs)
+					    {
+					        var i;
+					        if (message == "do:close") {
+					            if(tabs.length == 1)
+					                chrome.tabs.update(port.tab.id,{'url':'chrome://newtab/', 'selected':true});
+					            else
+					                chrome.tabs.remove(port.tab.id);
+					            return;
+					        }
+					        else if (message == "do:closeall") {
+                                i=0;
+                                while (i < tabs.length) {
+                                    chrome.tabs.remove(tabs[i].id);
+                                    i++;
+                                }
+                                return;
+					        }
+					        else if (message == "do:closeonly" ){
+                                i=0;
+                                while (i < tabs.length) {
+                                    if(port.tab.id!=tabs[i].id){
+	                                    chrome.tabs.remove(tabs[i].id);
+                                    }	                                    
+                                    i++;
+                                }
+                                return;
+					        }
+						    for( i = 0; i < tabs.length; i++)
+						    {
+							    if (tabs[i].id === port.tab.id)
+							    {
+								    var newtab = null;
+								    switch(message)
+								    {
+								    case "do:righttab":
+									    newtab = tabs[i+1] || tabs[0]; 
+									    break;
+								    case "do:lefttab":
+									    newtab = tabs[i-1] || tabs[tabs.length-1]; 
+									    break;
+								    case "do:lasttab":
+									    newtab = tabs[tabs.length-1]; 
+									    break;
+								    case "do:firsttab":
+									    newtab = tabs[0]; 
+									    break;
+								    case "do:closeleft":
+								        if (tabs[i-1]) {
+								            chrome.tabs.remove(tabs[i-1].id);
+								        }										    
+								        break;
+								    case "do:closeright":
+                                        if (tabs[i+1]) {
+								            chrome.tabs.remove(tabs[i+1].id);
+								        }										    
+								        break;
+								    }
+								    if (newtab)
+								    {
+									    chrome.tabs.update(newtab.id, {selected:true});
+									    chrome.tabs.update(port.tab.id, {selected:false});
+								    }
+							    }
+						    }
+					    }
+					);
+					break;
+				case "do:getcookie":
+				    nkToolStrip.refreshCookie();
+				    break;										    
+				default:							
+					break;
+				}
 			}
 		);
 		//发送用户定义的手势到连接来的tabs
         var connection = chrome.tabs.connect(port.tab.id,"nkGesturesTab");
         connection.postMessage(nkToolStrip.actionsConfig);
         if ( nkToolStrip.open_drag == true ) {
-            connection.postMessage("OpenDarg");
+            connection.postMessage('OpenDrag');
         }        
 	}
 );
+
+historyTab = new Array();
+historyTabRemove = new Array();
+capture = true;
+
+chrome.tabs.onCreated.addListener(function(tab) {
+    if(!capture)
+        return;
+    if (!tab.url)
+        return;
+    //console.log('tabs.onCreated -- window: ' + tab.windowId + ' tab: ' + tab.id + ' index ' + tab.index + ' url ' + tab.url);
+    if (historyTab.length >= 10) {
+        historyTab.shift();
+    }
+    historyTab.push(new Array(tab.id,tab.url));
+});
+chrome.tabs.onUpdated.addListener(function(tabId, props) {
+    if(!capture)
+        return;
+    if(!props.url)
+        return;
+    var i = 0;
+    var isInList = false;
+    //console.log('tabs.onUpdated -- tab: ' + tabId + ' status ' + props.status + ' url ' + props.url);
+    if (historyTab.length >= 10) {
+        historyTab.shift();
+    }
+    while (historyTab[i]) {
+
+        if (historyTab[i][0] == tabId) {
+            historyTab.splice(i,0,new Array(tabId,props.url));
+            isInList = true;
+            break;
+        }
+        i++;
+    }
+    if (!isInList) {
+        historyTab.push(new Array(tabId,props.url));
+    }    
+});
+chrome.tabs.onRemoved.addListener(function(tabId) {
+    var i = 0;
+
+    while (historyTab[i]) {
+        deta = historyTab[i];
+        if (deta[0] == tabId) {
+            if (historyTabRemove.length >= 10) {
+                historyTabRemove.shift();
+            }
+            historyTabRemove.push(deta);
+            break;
+        }
+        i++;
+    }  
+  //console.log('windows.onRemoved -- window: ' + windowId);
+});
+
+
+
 </script>
 <div onclick="window.open ('config.htm')" class="toolstrip-button">
   <img src="mouse.png"><span id="dirs">Ready</span>
