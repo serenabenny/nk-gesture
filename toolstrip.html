@@ -20,7 +20,15 @@
 var nkToolStrip = {
     gesturesName : "GesturesArray",
     
+    open_drag_name : "isOpenDrag",
+    
+    searchWebName : "SearchEngine",
+    
+    searchWeb : "http://www.google.cn/search?q=",
+    
     open_to_right : false,
+    
+    open_drag : false,
     
     actionsConfig : new Array(
     //newtab	        : 
@@ -88,6 +96,8 @@ var nkToolStrip = {
     
     init : function () {
         if (this.getCookie ('open_to_right') == 'enable') this.open_to_right = true;
+        
+        if (this.getCookie (this.open_drag_name) == 'enable') this.open_drag = true;
 
         var gestures = this.getCookie(this.gesturesName);
         if (gestures) {
@@ -96,12 +106,23 @@ var nkToolStrip = {
         {
             this.setCookie(this.gesturesName,this.actionsConfig,365);
         }
+        
+        var searchWeb = this.getCookie(this.searchWebName);
+        if (searchWeb) {
+            this.searchWeb = searchWeb;
+        }else
+        {
+            this.setCookie(this.searchWebName,this.searchWeb,365);
+        }        
     },
     
     refreshCookie : function () {
-        this.actionsConfig = getCookie(this.gesturesName);
+        this.actionsConfig = this.getCookie(this.gesturesName);
+        this.searchWeb = this.getCookie(this.searchWebName);
         if (this.getCookie ('open_to_right') == 'enable') this.open_to_right = true;
         else this.open_to_right = false;
+        if (this.getCookie (this.open_drag_name) == 'enable') this.open_drag = true;
+        else this.open_drag = false;
     }    
 };
 
@@ -118,6 +139,27 @@ chrome.extension.onConnect.addListener(
 				chrome.windows.get(port.tab.windowId, 
 					function(curWnd)
 					{
+						if(message[1])
+						{
+						    switch(message[0]) {
+					        case "do:drag":
+						        var link = message[1];
+						        if (link.indexOf ('http://') < 0)
+						        {
+						            link = searchWeb + link;
+						        }
+						        if(nkToolStrip.open_to_right)
+							        chrome.tabs.create({'windowId':curWnd.id, 'index':port.tab.index + 1, 'url':message[1], 'selected':true});
+							    else
+							        chrome.tabs.create({'windowId':curWnd.id, 'url':link, 'selected':true});							    
+							    break;
+                    	    case "do:show":
+						        document.getElementById("dirs").innerHTML = message[1];	
+						    default:
+						        break;
+						    }
+						}
+
 						switch(message)
 						{
 						case "do:newtab":
@@ -158,6 +200,7 @@ chrome.extension.onConnect.addListener(
 										if (newtab)
 										{
 											chrome.tabs.update(newtab.id, {selected:true});
+											chrome.tabs.update(port.tab.id, {selected:false});
 										}
 										break;
 									}
@@ -166,9 +209,8 @@ chrome.extension.onConnect.addListener(
 							break;
 						case "do:getcookie":
 						    nkToolStrip.refreshCookie();
-						    break;
-						default:
-							document.getElementById("dirs").innerHTML = message;
+						    break;										    
+						default:							
 							break;
 						}
 					}
@@ -178,6 +220,9 @@ chrome.extension.onConnect.addListener(
 		//发送用户定义的手势到连接来的tabs
         var connection = chrome.tabs.connect(port.tab.id,"nkGesturesTab");
         connection.postMessage(nkToolStrip.actionsConfig);
+        if ( nkToolStrip.open_drag == true ) {
+            connection.postMessage("OpenDarg");
+        }        
 	}
 );
 </script>
