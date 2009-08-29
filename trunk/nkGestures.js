@@ -19,7 +19,7 @@
 //The control code will send to extension's ToolStrip 
 var nkGestures = 
 {
-	Direction : { up:'U' , right:'R', down:'D',left:'L'},
+	Direction : { up:'U' , right:'R', down:'D', left:'L', forward:'F', back:'B' },
 	directions : '',
 	lastDirection : null,
 	x : 0,
@@ -150,19 +150,19 @@ var nkGestures =
 		this.connection = chrome.extension.connect("nkGestures");
 		window.addEventListener('mousedown', 		this,	true);
 		window.addEventListener('contextmenu',		this,	true);
-        window.addEventListener ('drop',            this,   true); 
+        window.addEventListener ('drop',            this); 
 	    window.addEventListener ('dragover',        this,   false); 
-	    window.addEventListener ('dragenter',       this,   false); 		    
+	    window.addEventListener ('dragenter',       this,   false);
 	},
 	
 
 	uninit: function()
 	{
-		window.removeEventListener("mousedown", 		this, true);
-		window.removeEventListener("mousemove", 		this, true);
-		window.removeEventListener("mouseup", 			this, true);
-		window.removeEventListener("contextmenu", 		this, true);
-        window.removeEventListener ('drop',             this, true); 
+		window.removeEventListener('mousedown', 		this, true);
+		window.removeEventListener('mousemove', 		this, true);
+		window.removeEventListener('mouseup', 			this, true);
+		window.removeEventListener('contextmenu', 		this, true);
+        window.removeEventListener ('drop',             this); 
 	    window.removeEventListener ('dragover',         this, false); 
 	    window.removeEventListener ('dragenter',        this, false); 
 	},
@@ -172,120 +172,166 @@ var nkGestures =
 	handleEvent: function(event)
 	{
 		switch (event.type) {
-			case "mousedown":
-				if (event.button == 2) 
+		case "mousedown":
+			if (event.button == 2) 
+			{
+				this.isRightButtonDown = true; 
+				this.x = event.clientX; 
+				this.y = event.clientY;
+				//this.connection.postMessage("begin");
+                window.addEventListener('mousemove', 		this,	true);
+                window.addEventListener('mouseup',			this,	true);
+                // DOM的滚轮事件
+                window.addEventListener('mousewheel',       this,   true); 
+			} else
+			{
+				this.stopGesture();
+			}
+			break;
+		case "mousemove":
+			if (this.isRightButtonDown)
+			{ 
+				var tx		= event.clientX;
+				var ty 		= event.clientY;
+				var offsetX = tx - this.x;
+				var offsetY = ty - this.y;
+				var direction; 
+				var actname = null;
+				if (Math.pow(offsetX,2) + Math.pow(offsetY,2) > 25)
 				{
-					this.isRightButtonDown = true; 
-					this.x = event.clientX; 
-					this.y = event.clientY;
-					//this.connection.postMessage("begin");
-                    window.addEventListener('mousemove', 		this,	true);
-                    window.addEventListener('mouseup',			this,	true);
-				} else
-				{
-					this.stopGesture();
-				}
-				break;
-			case "mousemove":
-				if (this.isRightButtonDown)
-				{ 
-					var tx		= event.clientX;
-					var ty 		= event.clientY;
-					var offsetX = tx - this.x;
-					var offsetY = ty - this.y;
-					var direction; 
-					var actname = null;
-					if (Math.pow(offsetX,2) + Math.pow(offsetY,2) > 25)
+					var tan = offsetY / offsetX;
+					if(Math.abs(offsetY) > Math.abs(offsetX))
 					{
-						var tan = offsetY / offsetX;
-						if(Math.abs(offsetY) > Math.abs(offsetX))
+						if(offsetY < 0)
 						{
-							if(offsetY < 0)
-							{
-								direction	= this.Direction.up;
-							} else
-							{
-								direction 	= this.Direction.down; 
-							}
+							direction	= this.Direction.up;
 						} else
 						{
-							if(offsetX < 0)
-							{
-								direction = this.Direction.left;
-							} else
-							{
-								direction = this.Direction.right; 
-							}
-						}	
-						if(this.lastDirection != direction)
-						{
-						    this.isRightClickDisable = true;
-							this.directions += direction;
-							this.lastDirection = direction;
-                            for(i = 0;i<this.actionsConfig.length;i++)
-						    {
-						        if(this.actionsConfig[i] == this.directions)
-						        {    
-						            actname = this.actionNames[i];
-						            break;
-						        }
-						    }
-						    var msg = new Array("do:show", this.directions + " : <b>" + actname + "</b>");
-						    this.connection.postMessage(msg);
+							direction 	= this.Direction.down; 
 						}
-						this.drawLine(this.x, this.y, tx, ty);
-						this.x = tx;
-						this.y = ty;
-					}
-				}
-				break;
-			case "mouseup":
-				if (event.button == 2 && this.isRightButtonDown)
-				{
-                    window.removeEventListener("mousemove", 		this, true);
-		            window.removeEventListener("mouseup", 			this, true); 
-					this.isRightButtonDown = false; 
-					if(this.directions.length)
-					{						
-						for(i = 0;i<this.actionsConfig.length;i++)
+					} else
+					{
+						if(offsetX < 0)
 						{
-						    if(this.actionsConfig[i] == this.directions)
-						    {
-						        this.actions[i](this.connection);
-						        break;
-						    }
-						}						
+							direction = this.Direction.left;
+						} else
+						{
+							direction = this.Direction.right; 
+						}
+					}	
+					if(this.lastDirection != direction)
+					{
+					    this.isRightClickDisable = true;
+						this.directions += direction;
+						this.lastDirection = direction;
+                        for(i = 0;i<this.actionsConfig.length;i++)
+					    {
+					        if(this.actionsConfig[i] == this.directions)
+					        {    
+					            actname = this.actionNames[i];
+					            break;
+					        }
+					    }
+					    var msg = new Array("do:show", this.directions + " : <b>" + actname + "</b>");
+					    this.connection.postMessage(msg);
 					}
-					this.stopGesture();
+					this.drawLine(this.x, this.y, tx, ty);
+					this.x = tx;
+					this.y = ty;
 				}
-				break;
-			case "contextmenu":
-				if(this.isRightClickDisable)
-				{
-					this.isRightClickDisable = false;
-					event.stopPropagation();
-					event.preventDefault(); 
+			}
+			break;
+		case "mouseup":
+			if (event.button == 2 && this.isRightButtonDown)
+			{
+			    window.removeEventListener('mousewheel',        this, true); 
+                window.removeEventListener("mousemove", 		this, true);
+	            window.removeEventListener("mouseup", 			this, true); 
+				this.isRightButtonDown = false; 
+				if(this.directions.length)
+				{						
+					for(i = 0;i<this.actionsConfig.length;i++)
+					{
+					    if(this.actionsConfig[i] == this.directions)
+					    {
+					        this.actions[i](this.connection);
+					        break;
+					    }
+					}						
 				}
-				//this.connection.postMessage("Ready");
-				break;
-			case "drop":
-			    if (!this.isOpenDrag) {
-			        break;
+				this.stopGesture();
+			}
+			break;
+		case "contextmenu":
+			if(this.isRightClickDisable)
+			{
+				this.isRightClickDisable = false;
+				event.stopPropagation();
+				event.preventDefault(); 
+			}
+			//this.connection.postMessage("Ready");
+			break;
+		case "drop":
+		    if (!this.isOpenDrag) {
+		        break;
+		    }
+		    if (event.preventDefault) event.preventDefault ();
+		    var link = window.getSelection().toString();
+            if (link != '') {
+		        this.connection.postMessage(new Array("do:dragtxt", link));
+		        break;
+		    }
+            link = event.dataTransfer.getData("URL");
+		    if (link != '') {
+		        this.connection.postMessage(new Array("do:dragurl", link));
+		        break;
+		    }
+		    link = event.dataTransfer.getData("URL");
+		    if (link != '') {
+                this.connection.postMessage(new Array("do:dragtxt", link));
+                break;
+		    }
+		    alert(link);
+		    this.connection.postMessage(new Array("do:drag", link));
+			break;
+		case "dragover":
+		case "dragenter":
+            if (!this.isOpenDrag) {
+		        break;
+		    }
+            if (event.preventDefault)
+            {
+                event.preventDefault();
+            }
+		    break;
+		case "mousewheel":
+		    var direction;
+		    var actname = null;
+            if (event.preventDefault)
+            {
+                event.preventDefault();
+            }
+
+		    if (event.wheelDelta > 0) {
+		        direction = this.Direction.forward;
+		    }
+		    else
+		        direction = this.Direction.back;			    
+		    if (this.lastDirection != direction) {
+		        this.lastDirection = direction;
+		        this.directions += direction;
+                for(i = 0;i<this.actionsConfig.length;i++)
+			    {
+			        if(this.actionsConfig[i] == this.directions)
+			        {    
+			            actname = this.actionNames[i];
+			            break;
+			        }
 			    }
-			    if (event.preventDefault) event.preventDefault ();          
-			    var link = event.dataTransfer.getData("Text");
-			    this.connection.postMessage(new Array("do:drag", link));	     
-				break;
-			case "dragover":
-			case "dragenter":
-                if (!this.isOpenDrag) {
-			        break;
-			    }
-                if (event.preventDefault)
-                {
-                    event.preventDefault();
-                }
-			    break;
+                var msg = new Array("do:show", this.directions + " : <b>" + actname + "</b>");
+                this.connection.postMessage(msg);
+		    }
+		    break;
 		}
 	},
 
@@ -365,4 +411,4 @@ chrome.extension.onConnect.addListener(function (port) {
 });
 //initialize nkGestures Object
 nkGestures.init();
-window.addEventListener("unload", function(){ nkGestures.uninit(); }, false);
+window.addEventListener('unload', function(){ nkGestures.uninit(); }, false);
