@@ -1,14 +1,14 @@
 {
-   "name": "nkGestures",
-   "version": "1.2.1",
-   "description": "Mouse gestures for google chrome by nk.",
-   "permissions": [ "http://*/*", "http://*/*", "tabs" ],
-   "toolstrips": [ "toolstrip.html" ],
-   "content_scripts": [ {
-   "permissions": [ "tabs" ],
-   "run_at": "document_start",
-   "js": [ "nkGestures.js" ],
-   "matches": [ "http://*/*", "file:///*", "https://*/*", "ftp://*/*" ]
-   } ],
-   "update_url": "http://nk-gesture.googlecode.com/files/updates.xml"
+	"name": "nkGestures by nk",
+	"version": "1.2.2",
+	"description": "打开配置文件 chrome-extension://ikbmamdaibjoldppbafhddjjlknbfofo/config.htm",
+	"permissions": [ "http://*/*", "https://*/*", "tabs" ],
+	"background_page": "toolstrip.html",
+	"content_scripts": [ {
+	"permissions": [ "tabs" ],
+	"run_at": "document_start",
+	"js": [ "nkGestures.js" ],
+	"matches": [ "http://*/*", "file:///*", "https://*/*", "ftp://*/*" ]
+	} ],
+	"update_url": "http://nk-gesture.googlecode.com/svn/trunk/updates.xml"
 }
