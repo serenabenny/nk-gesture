@@ -209,15 +209,16 @@ chrome.extension.onConnect.addListener(
                                 while (i < tabs.length) {
                                     tid=(message == "do:closeright")?
                                         tabs[tabs.length-1-i].id:tabs[i].id;
-                                    if(port.tab.id==tid &&
-                                      (message == "do:closeonly" 
-                                        || message == "do:closeleft" 
-                                        || message == "do:closeright")){
-                                        if(message == "do:closeleft" 
-                                            || message == "do:closeright"){
-                                                return;
+                                    if(port.tab.id==tid) {
+                                        if(message == "do:closeleft"
+                                        || message == "do:closeright"){
+                                            break;
                                         }
-                                        i++;
+                                        else if(message == "do:closeonly")
+                                        {
+                                            i++;
+                                            continue;
+                                        }                                        
                                     }
                                     chrome.tabs.remove(tid);
                                     i++;
