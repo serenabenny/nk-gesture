@@ -17,6 +17,8 @@ var nkConfig = {
     
     opt_odg : {name: 'isOpenDrag', label: '是否打开拖放'},
     
+    opt_hint : {name: 'isOpenHint', label: '是否打开手势提示'},
+    
     txt_link : {name:'SearchEngine', label:'搜索引擎'},
     
     actionNames :
@@ -166,6 +168,7 @@ window.onload=function ()
 	var config = document.getElementById ('config');
 	config.innerHTML += '<label><center>nkGestures for Chrome by nk</center></label>'
 	config.innerHTML += nkConfig.writeOption (nkConfig.opt_odg);
+	config.innerHTML += nkConfig.writeOption (nkConfig.opt_hint);
 	config.innerHTML += nkConfig.writeOption (nkConfig.opt_otr);
 	config.innerHTML += nkConfig.writeOption (nkConfig.opt_oif);
     config.innerHTML += nkConfig.writeText (nkConfig.txt_link);
