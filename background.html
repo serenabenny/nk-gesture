@@ -224,11 +224,12 @@ chrome.extension.onConnect.addListener(
 												|| message == "do:closeright"){
 													break;
 											}
-											else if(message == "do:closeonly")
-											{
-												i++;
-												continue;
-											}
+											//else if(message == "do:closeonly")
+											//{
+												tid=tabs[++i].id;  //减少循环次数,js优化
+												//continue;
+											//}
+											
 										}
 										chrome.tabs.remove(tid);
 										i++;
