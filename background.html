@@ -29,15 +29,19 @@ var nkToolStrip = {
 	searchWebName : "SearchEngine",
 
 	searchWeb : "http://www.google.cn/search?q=",
+	
+	open_hint_name : "isOpenHint",
 
 	open_to_right : false,
 
 	open_drag : false,
 
 	open_in_front : false,
+	
+	open_hint : false,
 
 	actionsConfig :     new Array(
-	"U",
+	"DU",
 	"DR",
 	"L",
 	"R",
@@ -102,16 +106,18 @@ var nkToolStrip = {
 
 	init : function () {
 		if (this.getCookie (this.open_drag_name) == 'enable') this.open_drag = true;
+		
+		if (this.getCookie (this.open_hint_name) == 'enable') this.open_hint = true;
 
 		if (this.getCookie (this.opr_name) == 'enable') this.open_to_right = true;
 
-		if (this.getCookie (this.oif_name) == 'enable') this.open_in_front = true;
+		if (this.getCookie (this.oif_name) == 'enable') this.open_in_front = true;		
 
 		var gestures = this.getCookie(this.gesturesName);
 		if (gestures) {
 			this.actionsConfig = gestures;
 		}else{
-				this.setCookie(this.gesturesName,this.actionsConfig,365);
+			this.setCookie(this.gesturesName,this.actionsConfig,365);
 		}
 
 		var searchWeb = this.getCookie(this.searchWebName);
@@ -131,6 +137,8 @@ var nkToolStrip = {
 		else this.open_in_front = false;
 		if (this.getCookie (this.open_drag_name) == 'enable') this.open_drag = true;
 		else this.open_drag = false;
+        if (this.getCookie (this.open_hint_name) == 'enable') this.open_hint = true;
+		else this.open_hint = false;
 	}
 };
 
@@ -152,12 +160,12 @@ chrome.extension.onConnect.addListener(
 							link += nkToolStrip.searchWeb;
 					case "do:dragurl":
 							link += message[1];
-						var tab = {'windowId':port.tab.windowId, 'url':link, 'selected':false};
+						var newTab = {'windowId':port.tab.windowId, 'url':link, 'selected':false};
 						if(nkToolStrip.open_to_right)
-							tab.index = port.tab.index+1;
+							newTab.index = port.tab.index+1;
 						if(nkToolStrip.open_in_front)
-							tab.selected = true;
-						chrome.tabs.create(tab);
+							newTab.selected = true;
+						chrome.tabs.create(newTab);
 						break;
 //							case "do:show":
 //								document.getElementById("dirs").innerHTML = message[1];
@@ -169,10 +177,12 @@ chrome.extension.onConnect.addListener(
 					switch(message)
 					{
 						case "do:newtab":
+							var newTab = {'windowId':port.tab.windowId, 'url':'chrome://newtab/', 'selected':false};
 							if(nkToolStrip.open_to_right)
-								chrome.tabs.create({'windowId':port.tab.windowId, 'index':port.tab.index + 1, 'url':'chrome://newtab/', 'selected':true});
-							else
-								chrome.tabs.create({'windowId':port.tab.windowId, 'url':'chrome://newtab/', 'selected':true});
+								newTab.index = port.tab.index + 1;
+							if(nkToolStrip.open_in_front)
+								newTab.selected = true;
+							chrome.tabs.create(newTab);
 							break;
 						case "do:openindex":
 							chrome.tabs.update(port.tab.id,{'url':'chrome://newtab/', 'selected':true});
@@ -272,6 +282,9 @@ chrome.extension.onConnect.addListener(
 		connection.postMessage(nkToolStrip.actionsConfig);
 		if ( nkToolStrip.open_drag == true ) {
 			connection.postMessage('OpenDrag');
+		}
+        if ( nkToolStrip.open_hint == true ) {
+			connection.postMessage('OpenHint');
 		}
 	}
 );

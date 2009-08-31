@@ -28,6 +28,7 @@ var nkGestures =
 	isRightClickDisable : false,
 	connection : null,
 	isOpenDrag : false,
+	isOpenHint : false,
 
 	actionsConfig :
 	new Array(
@@ -68,27 +69,27 @@ var nkGestures =
 
 	actionNames :
 		new Array(
-			//newtab			:
+			//newtab:
 			"新标签",
-			//close			:
+			//close:
 			"关标签",
-			//back			:
+			//back:
 			"后退",
-			//forward		    :
+			//forward:
 			"前进",
-			//stop			:
+			//stop:
 			"停止",
-			//reload		    :
+			//reload:
 			"重载",
-			//reload		    :
+			//reload:
 			"刷新",
-			//righttab		:
+			//righttab:
 			"右标签",
-			//lefttab		    :
+			//lefttab:
 			"左标签",
-			//lasttab		    :
+			//lasttab:
 			"后端标签",
-			//firsttab		:
+			//firsttab:
 			"前端标签",
 			"上翻页",
 			"下翻页",
@@ -99,7 +100,8 @@ var nkGestures =
 			"关左标签",
 			"关右标签",
 			"当前标签开主页",
-			"恢复刚关闭标签"
+			"恢复刚关闭标签",
+			"打开配置文件"
 		),
 	actions :
 	new Array(
@@ -151,23 +153,23 @@ var nkGestures =
 	init: 	function()
 	{
 		this.connection = chrome.extension.connect("nkGestures");
-		window.addEventListener('mousedown', 		this,	true);
-		window.addEventListener('contextmenu',		this,	true);
-		window.addEventListener ('drop',            this);
-		window.addEventListener ('dragover',        this,   false);
-		window.addEventListener ('dragenter',       this,   false);
+		window.addEventListener('mousedown', this, true);
+		window.addEventListener('contextmenu', this, true);
+		window.addEventListener ('drop', this);
+		window.addEventListener ('dragover', this, false);
+		window.addEventListener ('dragenter', this, false);
 	},
 
 
 	uninit: function()
 	{
-		window.removeEventListener('mousedown', 		this, true);
-		window.removeEventListener('mousemove', 		this, true);
-		window.removeEventListener('mouseup', 			this, true);
-		window.removeEventListener('contextmenu', 		this, true);
-		window.removeEventListener ('drop',             this);
-		window.removeEventListener ('dragover',         this, false);
-		window.removeEventListener ('dragenter',        this, false);
+		window.removeEventListener('mousedown', this, true);
+		window.removeEventListener('mousemove', this, true);
+		window.removeEventListener('mouseup', this, true);
+		window.removeEventListener('contextmenu', this, true);
+		window.removeEventListener ('drop', this);
+		window.removeEventListener ('dragover', this, false);
+		window.removeEventListener ('dragenter', this, false);
 	},
 
 
@@ -182,9 +184,9 @@ var nkGestures =
 				this.x = event.clientX;
 				this.y = event.clientY;
 				//this.connection.postMessage("begin");
-				window.addEventListener('mousemove', 		this,	true);
-				window.addEventListener('mouseup',			this,	true);
-				window.addEventListener('mousewheel',       this,   true);
+				window.addEventListener('mousemove', this, true);
+				window.addEventListener('mouseup', this, true);
+				window.addEventListener('mousewheel', this, true);
 			} else
 			{
 				this.stopGesture();
@@ -206,10 +208,10 @@ var nkGestures =
 					{
 						if(offsetY < 0)
 						{
-							direction	= this.Direction.up;
+							direction = this.Direction.up;
 						} else
 						{
-							direction 	= this.Direction.down;
+							direction = this.Direction.down;
 						}
 					} else
 					{
@@ -226,16 +228,20 @@ var nkGestures =
 						this.isRightClickDisable = true;
 						this.directions += direction;
 						this.lastDirection = direction;
-// 						for(i = 0;i<this.actionsConfig.length;i++)
-// 						{
-// 							if(this.actionsConfig[i] == this.directions)
-// 							{
-// 								actname = this.actionNames[i];
-// 								break;
-// 							}
-// 						}
-// 						var msg = new Array("do:show", this.directions + " : <b>" + actname + "</b>");
-// 						this.connection.postMessage(msg);
+						if(this.isOpenHint)
+						{
+						    for(i = 0;i<this.actionsConfig.length;i++)
+						    {
+							    if(this.actionsConfig[i] == this.directions)
+							    {
+								    actname = this.actionNames[i];
+								    break;
+							    }
+						    }
+						    //var msg = new Array("do:show", this.directions + " : <b>" + actname + "</b>");
+						    //this.connection.postMessage(msg);
+						    this.createHint( this.directions + ' : ' + actname );
+						}
 					}
 					this.drawLine(this.x, this.y, tx, ty);
 					this.x = tx;
@@ -246,9 +252,9 @@ var nkGestures =
 		case "mouseup":
 			if (event.button == 2 && this.isRightButtonDown)
 			{
-				window.removeEventListener('mousewheel',        this, true);
-				window.removeEventListener("mousemove", 		this, true);
-				window.removeEventListener("mouseup", 			this, true);
+				window.removeEventListener('mousewheel', this, true);
+				window.removeEventListener("mousemove", this, true);
+				window.removeEventListener("mouseup", this, true);
 				this.isRightButtonDown = false;
 				if(this.directions.length)
 				{
@@ -271,7 +277,6 @@ var nkGestures =
 				event.stopPropagation();
 				event.preventDefault();
 			}
-			//this.connection.postMessage("Ready");
 			break;
 		case "drop":
 			if (!this.isOpenDrag) {
@@ -333,7 +338,8 @@ var nkGestures =
 		this.directions = '';
 		this.lastDirection = null;
 		this.clearLines();
-		//this.connection.postMessage(new Array("do:show", "Ready"));
+		if(this.isOpenHint)
+		    this.deleteHint();
 	},
 
 	clearLines: function()
@@ -371,21 +377,44 @@ var nkGestures =
 		g.moveTo(x,y);
 		g.lineTo(tx,ty);
 		g.stroke();
+	},
+	
+	createHint : function (msg) {
+	var hint = document.getElementById('_nk_drag_hint');
+		if(!hint)
+		{
+			hint = document.createElement('_nk_hint');
+			hint.id = '_nk_drag_hint';
+			hint.innerHTML = '<div style="height:20px;position:fixed;display:block;bottom:0px;left:1px;zIndex:1000;background:#D2E1F6;font-size:10px;color:#808080;text-align:middle;"><span id="_nk_drag_dirs"></span></div>';
+			document.body.appendChild(hint);
+		}
+		document.getElementById('_nk_drag_dirs').innerHTML = msg;
+	},
+	
+	deleteHint : function () {
+        var hint = document.getElementById('_nk_drag_hint');
+		if(hint)
+		{
+			document.body.removeChild(hint);
+		}	    
 	}
 };
 //监听端口接手用户自定义手势
 function string2array(string,array) {
 	var i,j;
+	var temp = '';
+	i = 0;
 	j = 0;
-	for(i=0;i<array.length;i++)
+	while(string[j])
 	{
-		var temp = '';
-		while (j<string.length && string[j]!=',') {
+		temp = '';
+		while (j<string.length && string[j] != ',') {
 			temp += string[j];
 			j++;
 		}
-		j++;
 		array[i] = temp;
+		j++;
+		i++;
 	}
 }
 
@@ -395,6 +424,10 @@ chrome.extension.onConnect.addListener(function (port) {
 	port.onMessage.addListener(function (message) {
 		if ( message == 'OpenDrag' ) {
 			nkGestures.isOpenDrag = true;
+		}
+		else if( message == 'OpenHint' )
+		{
+		    nkGestures.isOpenHint = true;
 		}
 		else{
 			string2array(message,nkGestures.actionsConfig );
