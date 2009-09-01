@@ -219,7 +219,7 @@ chrome.extension.onConnect.addListener(
 									while (i < tabs.length) {
 										tid=(message == "do:closeright")?
 											tabs[tabs.length-1-i++].id:tabs[i++].id;
-										if(port.tab.id==tid) {
+										if(port.tab.id==tid && message !="do:closeall") {
 											if(message == "do:closeleft"
 												|| message == "do:closeright"){
 													break;
