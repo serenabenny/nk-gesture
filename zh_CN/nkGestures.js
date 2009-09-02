@@ -155,7 +155,7 @@ var nkGestures =
 	),
 	init: 	function()
 	{
-		this.connection = chrome.extension.connect("nkGestures");
+		this.connection = chrome.extension.connect({name : "nkGestures"});
 		window.addEventListener('mousedown', this, true);
 		window.addEventListener('contextmenu', this, true);
 		window.addEventListener ('drop', this);
