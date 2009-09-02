@@ -31,6 +31,8 @@ var nkToolStrip = {
 	searchWeb : "http://www.google.cn/search?q=",
 	
 	open_hint_name : "isOpenHint",
+	
+	is_en_name : "isEnglish",
 
 	open_to_right : false,
 
@@ -39,6 +41,8 @@ var nkToolStrip = {
 	open_in_front : false,
 	
 	open_hint : false,
+	
+	is_English : false,
 
 	actionsConfig :     new Array(
 	"DU",
@@ -47,9 +51,9 @@ var nkToolStrip = {
 	"R",
 	"D",
 	"UD",
-	"RD",
-	"UR",
+	"",
 	"UL",
+	"UR",
 	"LU",
 	"RU",
 	"",
@@ -111,7 +115,9 @@ var nkToolStrip = {
 
 		if (this.getCookie (this.opr_name) == 'enable') this.open_to_right = true;
 
-		if (this.getCookie (this.oif_name) == 'enable') this.open_in_front = true;		
+		if (this.getCookie (this.oif_name) == 'enable') this.open_in_front = true;
+		
+		if (this.getCookie (this.is_en_name) == 'enable') this.isEnglish = true;
 
 		var gestures = this.getCookie(this.gesturesName);
 		if (gestures) {
@@ -137,8 +143,10 @@ var nkToolStrip = {
 		else this.open_in_front = false;
 		if (this.getCookie (this.open_drag_name) == 'enable') this.open_drag = true;
 		else this.open_drag = false;
-        if (this.getCookie (this.open_hint_name) == 'enable') this.open_hint = true;
+		if (this.getCookie (this.open_hint_name) == 'enable') this.open_hint = true;
 		else this.open_hint = false;
+		if (this.getCookie (this.is_en_name) == 'enable') this.isEnglish = true;
+		else this.isEnglish = false;
 	}
 };
 
@@ -278,8 +286,10 @@ chrome.extension.onConnect.addListener(
 		if ( nkToolStrip.open_drag == true ) {
 			connection.postMessage('OpenDrag');
 		}
-        if ( nkToolStrip.open_hint == true ) {
+		if ( nkToolStrip.open_hint == true ) {
 			connection.postMessage('OpenHint');
+			if(nkToolStrip.isEnglish)
+				connection.postMessage('isEnglish');
 		}
 	}
 );
