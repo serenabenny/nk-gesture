@@ -273,7 +273,7 @@ chrome.extension.onConnect.addListener(
 			}
 		);
 //发送用户定义的手势到连接来的tabs
-		var connection = chrome.tabs.connect(port.tab.id,"nkGesturesTab");
+		var connection = chrome.tabs.connect(port.tab.id,{name : "nkGesturesTab"});
 		connection.postMessage(nkToolStrip.actionsConfig);
 		if ( nkToolStrip.open_drag == true ) {
 			connection.postMessage('OpenDrag');
