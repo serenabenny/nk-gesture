@@ -32,30 +32,31 @@ var nkGestures =
 	connection : null,
 	isOpenDrag : false,
 	isOpenHint : false,
+	isEnglish : false,
 
 	actionsConfig :
 	new Array(
-		//newtab	        :
+		//newtab:
 		"U",
-		//close           :
+		//close:
 		"DR",
-		//goback	        :
+		//goback:
 		"L",
-		//goforward		:
+		//goforward:
 		"R",
-		//stop		    :
+		//stop:
 		"D",
-		//reload	        :
+		//reload:
 		"UD",
-		//refresh         :
+		//refresh:
 		"RD",
-		//righttab	    :
+		//righttab:
 		"UR",
-		//lefttab	        :
+		//lefttab:
 		"UL",
-		//firsttab	    :
+		//firsttab:
 		"LU",
-		//lasttab	        :
+		//lasttab:
 		"RU",
 		"",
 		"",
@@ -72,28 +73,17 @@ var nkGestures =
 
 	actionNames :
 		new Array(
-			//newtab:
 			"新标签",
-			//close:
 			"关标签",
-			//back:
 			"后退",
-			//forward:
 			"前进",
-			//stop:
 			"停止",
-			//reload:
 			"重载",
-			//reload:
 			"刷新",
-			//righttab:
-			"右标签",
-			//lefttab:
 			"左标签",
-			//lasttab:
-			"后端标签",
-			//firsttab:
+			"右标签",
 			"前端标签",
+			"后端标签",
 			"上翻页",
 			"下翻页",
 			"到最顶端",
@@ -106,50 +96,75 @@ var nkGestures =
 			"恢复刚关闭标签",
 			"打开配置文件"
 		),
+	actionNames_en :
+		new Array(
+			"New Tab",
+			"Close Tab",
+			"Back",
+			"Forward",
+			"Stop",
+			"Reload",
+			"Refresh",
+			"Left Tab",
+			"Right Tab",
+			"First Tab",
+			"Last Tab",
+			"Page Up",
+			"Page Down",
+			"Goto Top",
+			"Goto Bottom",
+			"Exit Browser",
+			"Close Others",
+			"Close All Left Tab",
+			"Close All Right Tab",
+			"Open Home Page",
+			"Restore Tab",
+			"Configure"
+		),
 	actions :
-	new Array(
-		// 		newtab:
+		new Array(
+		//			newtab:
 		function(connection) { connection.postMessage("do:newtab");},
-		// 	    close:
+		//			close:
 		function(connection) { connection.postMessage("do:close");},
-		// 	    goback:
+		//			goback:
 		function(connection) { history.back();},
-		// 	    	:
+		//			forward:
 		function(connection) { history.forward();},
-		// 	    stop:
+		//			stop:
 		function(connection) { stop();},
-		// 	    reload:
+		//			reload:
 		function(connection) { window.location.reload(true);},
-		// 	    refresh:
+		//			refresh:
 		function(connection) { window.location.reload();},
-		// 	    righttab:
-		function(connection) { connection.postMessage("do:righttab");},
-		// 	    lefttab:
+		//			lefttab:
 		function(connection) { connection.postMessage("do:lefttab");},
-		// 	    firsttab:
+		//			righttab:
+		function(connection) { connection.postMessage("do:righttab");},
+		//			firsttab:
 		function(connection) { connection.postMessage("do:firsttab");},
-		// 	    lasttab:
+		//			lasttab:
 		function(connection) { connection.postMessage("do:lasttab");},
-		//      pageup
+		//			pageup
 		function(connection) { window.scrollBy(0,45-window.innerHeight);},
-		//      pagedown
+		//			pagedown
 		function(connection) { window.scrollBy(0,window.innerHeight-45);},
-		//      gotop
+		//			gotop
 		function(connection) { top.window.scrollBy(0,-top.document.body.scrollHeight);window.scrollBy(0,-document.body.scrollHeight);},
-		//      gobotton
+		//			gobotton
 		function(connection) { top.window.scrollBy(0,top.document.body.scrollHeight);window.scrollBy(0,document.body.scrollHeight);},
-		//      closeall
-		function(connection) { connection.postMessage("do:closeall");	},
-		//      closeonly
-		function(connection) { connection.postMessage("do:closeonly");	},
-		//      closeleft
-		function(connection) { connection.postMessage("do:closeleft");	},
-		//      closeright
-		function(connection) { connection.postMessage("do:closeright");	},
-		//      openindex
-		function(connection) { connection.postMessage("do:openindex");	},
-		//      restore
-		function(connection) { connection.postMessage("do:restore");	},
+		//			closeall
+		function(connection) { connection.postMessage("do:closeall");},
+		//			closeonly
+		function(connection) { connection.postMessage("do:closeonly");},
+		//			closeleft
+		function(connection) { connection.postMessage("do:closeleft");},
+		//			closeright
+		function(connection) { connection.postMessage("do:closeright");},
+		//			openindex
+		function(connection) { connection.postMessage("do:openindex");},
+		//			restore
+		function(connection) { connection.postMessage("do:restore");},
 		//			openconfig
 		function(connection) { connection.postMessage("do:config");}
 	),
@@ -233,17 +248,15 @@ var nkGestures =
 						this.lastDirection = direction;
 						if(this.isOpenHint)
 						{
-						    for(i = 0;i<this.actionsConfig.length;i++)
-						    {
-							    if(this.actionsConfig[i] == this.directions)
-							    {
-								    actname = this.actionNames[i];
-								    break;
-							    }
-						    }
-						    //var msg = new Array("do:show", this.directions + " : <b>" + actname + "</b>");
-						    //this.connection.postMessage(msg);
-						    this.createHint( this.directions + ' : ' + actname );
+							for(i = 0;i<this.actionsConfig.length;i++)
+							{
+								if(this.actionsConfig[i] == this.directions)
+								{
+									actname = this.isEnglish?this.actionNames_en[i]:this.actionNames[i];
+									break;
+								}
+							}
+							this.createHint( this.directions + ' : ' + actname );
 						}
 					}
 					this.drawLine(this.x, this.y, tx, ty);
@@ -317,10 +330,7 @@ var nkGestures =
 		case "mousewheel":
 			var direction;
 			var actname = null;
-			if (event.preventDefault)
-			{
-				event.preventDefault();
-			}
+			this.isRightClickDisable = true;
 
 			if (event.wheelDelta > 0) {
 				direction = this.Direction.forward;
@@ -330,6 +340,22 @@ var nkGestures =
 			if (this.lastDirection != direction) {
 				this.lastDirection = direction;
 				this.directions += direction;
+				if(this.isOpenHint)
+				{
+					for(i = 0;i<this.actionsConfig.length;i++)
+					{
+						if(this.actionsConfig[i] == this.directions)
+						{
+							actname = this.isEnglish?this.actionNames_en[i]:this.actionNames[i];
+							break;
+						}
+					}
+					this.createHint( this.directions + ' : ' + actname );
+				}
+			}
+			if (event.preventDefault)
+			{
+				event.preventDefault();
 			}
 			break;
 		}
@@ -386,20 +412,28 @@ var nkGestures =
 	var hint = document.getElementById('_nk_drag_hint');
 		if(!hint)
 		{
-			hint = document.createElement('_nk_hint');
+			hint = document.createElement('div');
 			hint.id = '_nk_drag_hint';
-			hint.innerHTML = '<div style="height:20px;position:fixed;display:block;bottom:0px;left:1px;zIndex:1000;background:#D2E1F6;font-size:10px;color:#808080;text-align:middle;"><span id="_nk_drag_dirs"></span></div>';
+			hint.innerHTML = '<div style="height:20px;position:fixed;display:block;bottom:0px;left:1px;zIndex:1000;background:#D2E1F6;font-size:10px;color:#808080;">'
+			+'<span id="_nk_drag_dirs"></span></div>';
 			document.body.appendChild(hint);
 		}
-		document.getElementById('_nk_drag_dirs').innerHTML = msg;
+		hint.firstChild.innerHTML = msg;
 	},
 	
 	deleteHint : function () {
-        var hint = document.getElementById('_nk_drag_hint');
+		var hint = document.getElementById('_nk_drag_hint');
 		if(hint)
 		{
+			var child = hint.childNodes;
+			var i = child.length;
+			while(i>0)
+			{
+				hint.removeChild(child[i-1]);
+				i--;
+			}
 			document.body.removeChild(hint);
-		}	    
+		}
 	}
 };
 //监听端口接手用户自定义手势
@@ -430,7 +464,11 @@ chrome.extension.onConnect.addListener(function (port) {
 		}
 		else if( message == 'OpenHint' )
 		{
-		    nkGestures.isOpenHint = true;
+			nkGestures.isOpenHint = true;
+		}
+		else if( message == 'isEnglish' )
+		{
+			nkGestures.isEnglish = true;
 		}
 		else{
 			string2array(message,nkGestures.actionsConfig );
