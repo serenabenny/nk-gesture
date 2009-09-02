@@ -1,0 +1,352 @@
+﻿<script>
+//nkGestures Mouse Gesture for Chrome
+//Copyright (C) 2009  CJvoid, Niklen, BugVuln
+//
+//This program is free software: you can redistribute it and/or modify
+//it under the terms of the GNU General Public License as published by
+//the Free Software Foundation, either version 3 of the License, or
+//(at your option) any later version.
+//
+//This program is distributed in the hope that it will be useful,
+//but WITHOUT ANY WARRANTY; without even the implied warranty of
+//MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//GNU General Public License for more details.
+//
+//You should have received a copy of the GNU General Public License
+//along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+//toolstrip by nk
+//nkToolStrip object 处理每个网页发送来的消息包括config.html的消息
+var nkToolStrip = {
+	gesturesName : "GesturesArray",
+
+	open_drag_name : "isOpenDrag",
+
+	opr_name : "open_to_right",
+
+	oif_name : "open_in_front",
+
+	searchWebName : "SearchEngine",
+
+	searchWeb : "http://www.google.cn/search?q=",
+	
+	open_hint_name : "isOpenHint",
+	
+	is_en_name : "isEnglish",
+
+	open_to_right : false,
+
+	open_drag : false,
+
+	open_in_front : false,
+	
+	open_hint : false,
+	
+	is_English : false,
+
+	actionsConfig :     new Array(
+	"DU",
+	"DR",
+	"L",
+	"R",
+	"D",
+	"UD",
+	"",
+	"UL",
+	"UR",
+	"LU",
+	"RU",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"URDLD"
+	),
+
+	getCookie : function(c_name)
+	{
+		if (document.cookie.length>0)
+		{
+			c_start=document.cookie.indexOf(c_name + "=");
+			if (c_start!=-1)
+			{
+				c_start=c_start + c_name.length+1 ;
+				c_end=document.cookie.indexOf(";",c_start);
+				if (c_end==-1) c_end=document.cookie.length;
+				return unescape(document.cookie.substring(c_start,c_end));
+			}
+		}
+		return "";
+	},
+
+	setCookie : function(c_name,value,expiredays)
+	{
+		var exdate=new Date();
+		exdate.setDate(exdate.getDate()+expiredays);
+		document.cookie=c_name+ "=" +escape(value)+((expiredays==null) ? "" : "; expires="+exdate.toGMTString());
+	},
+
+	string2array : function(string,array)
+	{
+		var i,j;
+		j = 0;
+		for(i=0;i<array.length;i++)
+		{
+			var temp = '';
+			while (j<string.length && string[j]!=',') {
+				temp += string[j];
+				j++;
+			}
+			j++;
+			array[i] = temp;
+		}
+	},
+
+	init : function () {
+		if (this.getCookie (this.open_drag_name) == 'enable') this.open_drag = true;
+		
+		if (this.getCookie (this.open_hint_name) == 'enable') this.open_hint = true;
+
+		if (this.getCookie (this.opr_name) == 'enable') this.open_to_right = true;
+
+		if (this.getCookie (this.oif_name) == 'enable') this.open_in_front = true;
+		
+		if (this.getCookie (this.is_en_name) == 'enable') this.isEnglish = true;
+
+		var gestures = this.getCookie(this.gesturesName);
+		if (gestures) {
+			this.actionsConfig = gestures;
+		}else{
+			this.setCookie(this.gesturesName,this.actionsConfig,365);
+		}
+
+		var searchWeb = this.getCookie(this.searchWebName);
+		if (searchWeb) {
+			this.searchWeb = searchWeb;
+		}else{
+			this.setCookie(this.searchWebName,this.searchWeb,365);
+		}
+	},
+
+	refreshCookie : function () {
+		this.actionsConfig = this.getCookie(this.gesturesName);
+		this.searchWeb = this.getCookie(this.searchWebName);
+		if (this.getCookie (this.opr_name) == 'enable') this.open_to_right = true;
+		else this.open_to_right = false;
+		if (this.getCookie (this.oif_name) == 'enable') this.open_in_front = true;
+		else this.open_in_front = false;
+		if (this.getCookie (this.open_drag_name) == 'enable') this.open_drag = true;
+		else this.open_drag = false;
+		if (this.getCookie (this.open_hint_name) == 'enable') this.open_hint = true;
+		else this.open_hint = false;
+		if (this.getCookie (this.is_en_name) == 'enable') this.isEnglish = true;
+		else this.isEnglish = false;
+	}
+};
+
+nkToolStrip.init();
+
+chrome.extension.onConnect.addListener(
+	function(port)
+	{
+		if(port.name != "nkGestures")
+		return;
+		port.onMessage.addListener(
+			function(message)
+			{
+				var link = '';
+				switch(message[0])
+				{
+					case "do:dragtxt":
+						if (message[1].indexOf("http://") < 0)
+							link += nkToolStrip.searchWeb;
+					case "do:dragurl":
+							link += message[1];
+						var newTab = {'windowId':port.tab.windowId, 'url':link, 'selected':false};
+						if(nkToolStrip.open_to_right)
+							newTab.index = port.tab.index+1;
+						if(nkToolStrip.open_in_front)
+							newTab.selected = true;
+						chrome.tabs.create(newTab);
+						break;
+//							case "do:show":
+//								document.getElementById("dirs").innerHTML = message[1];
+//								break;
+					default:
+						break;
+					}
+
+					switch(message)
+					{
+						case "do:newtab":
+							var newTab = {'windowId':port.tab.windowId, 'url':'chrome://newtab/', 'selected':false};
+							if(nkToolStrip.open_to_right)
+								newTab.index = port.tab.index + 1;
+							if(nkToolStrip.open_in_front)
+								newTab.selected = true;
+							chrome.tabs.create(newTab);
+							break;
+						case "do:openindex":
+							chrome.tabs.update(port.tab.id,{'url':'chrome://newtab/', 'selected':true});
+							break;
+						case "do:restore":
+							capture = false;
+							chrome.tabs.create({'windowId':port.tab.windowId, 'index':port.tab.index + 1, 'url':historyTabRemove.pop()[1], 'selected':true});
+							capture = true;
+							break;
+						case "do:close":
+						case "do:righttab":
+						case "do:lefttab":
+						case "do:lasttab":
+						case "do:firsttab":
+						case "do:closeall":
+						case "do:closeonly":
+						case "do:closeleft":
+						case "do:closeright":
+							chrome.tabs.getAllInWindow(port.tab.windowId, function(tabs)
+							{
+								var i;
+								if (message == "do:close") {
+									if(tabs.length == 1)
+									chrome.tabs.update(port.tab.id,
+									{'url':'chrome://newtab/', 'selected':true});
+									else
+										chrome.tabs.remove(port.tab.id);
+									return;
+								}
+
+								if (message.indexOf("do:close")!=-1) {
+									i=0;
+									var tid;
+									while (i < tabs.length) {
+										tid=(message == "do:closeright")?
+											tabs[tabs.length-1-i++].id:tabs[i++].id;
+										if(port.tab.id==tid && message !="do:closeall") {
+											if(message == "do:closeleft"
+												|| message == "do:closeright"){
+													break;
+											}
+												tid=tabs[i++].id;  //减少循环次数,js优化		
+										}
+										chrome.tabs.remove(tid);
+									}
+									return;
+								}
+								for( i = 0; i < tabs.length; i++)
+								{
+									if (tabs[i].id === port.tab.id)
+									{
+										var newtab = null;
+										switch(message)
+										{
+											case "do:righttab":
+												newtab = tabs[i+1] || tabs[0];
+												break;
+											case "do:lefttab":
+												newtab = tabs[i-1]
+													|| tabs[tabs.length-1];
+												break;
+											case "do:lasttab":
+												newtab = tabs[tabs.length-1];
+												break;
+											case "do:firsttab":
+												newtab = tabs[0];
+												break;
+										}
+										if (newtab)
+										{
+											chrome.tabs.update(newtab.id,{selected:true});
+											chrome.tabs.update(port.tab.id,{selected:false});
+										}
+									}
+								}
+							}
+						);
+						break;
+					case "do:config":
+						chrome.tabs.create({'windowId':port.tab.windowId, 'index':port.tab.index + 1, 'url':'config.html', 'selected':true});
+						break;
+					case "do:getcookie":
+						nkToolStrip.refreshCookie();
+						break;
+					default:
+						break;
+				}
+			}
+		);
+//发送用户定义的手势到连接来的tabs
+		var connection = chrome.tabs.connect(port.tab.id,{name : "nkGesturesTab"});
+		connection.postMessage(nkToolStrip.actionsConfig);
+		if ( nkToolStrip.open_drag == true ) {
+			connection.postMessage('OpenDrag');
+		}
+		if ( nkToolStrip.open_hint == true ) {
+			connection.postMessage('OpenHint');
+			if(nkToolStrip.isEnglish)
+				connection.postMessage('isEnglish');
+		}
+	}
+);
+
+historyTab = new Array();
+historyTabRemove = new Array();
+capture = true;
+
+chrome.tabs.onCreated.addListener(function(tab) {
+	if(!capture)
+		return;
+	if (!tab.url)
+		return;
+	//console.log('tabs.onCreated -- window: ' + tab.windowId + ' tab: ' + tab.id + ' index ' + tab.index + ' url ' + tab.url);
+	if (historyTab.length >= 10) {
+		historyTab.shift();
+	}
+	historyTab.push(new Array(tab.id,tab.url));
+});
+chrome.tabs.onUpdated.addListener(function(tabId, props) {
+	if(!capture)
+		return;
+	if(!props.url)
+		return;
+	var i = 0;
+	var isInList = false;
+	//console.log('tabs.onUpdated -- tab: ' + tabId + ' status ' + props.status + ' url ' + props.url);
+	if (historyTab.length >= 10) {
+		historyTab.shift();
+	}
+	while (historyTab[i]) {
+
+		if (historyTab[i][0] == tabId) {
+			historyTab.splice(i,0,new Array(tabId,props.url));
+			isInList = true;
+			break;
+		}
+		i++;
+	}
+	if (!isInList) {
+		historyTab.push(new Array(tabId,props.url));
+	}
+});
+chrome.tabs.onRemoved.addListener(function(tabId) {
+	var i = 0;
+
+	while (historyTab[i]) {
+		deta = historyTab[i];
+		if (deta[0] == tabId) {
+			if (historyTabRemove.length >= 10) {
+				historyTabRemove.shift();
+			}
+			historyTabRemove.push(deta);
+			break;
+		}
+		i++;
+	}
+	//console.log('windows.onRemoved -- window: ' + windowId);
+});
+</script>

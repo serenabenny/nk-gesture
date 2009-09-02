@@ -1,0 +1,251 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" /> 
+<script>
+var nkConfig = {	
+	gesturesName : "GesturesArray",
+
+	connection : null,
+
+	gestures : null,
+	
+	isEnglish : false,
+
+	opt_en : {name: 'isEnglish', label: 'English Language',label_en: '英文'},
+
+	opt_otr : {name: 'open_to_right', label: '当前标签右侧打开新标签',label_en: 'Open tabs next to the current tab'},
+
+	opt_oif : {name: 'open_in_front', label: '拖拽激活新标签',label_en: 'Open new tabs in foreground'},
+
+	opt_odg : {name: 'isOpenDrag', label: '打开拖放',label_en: 'Eable drag and drop'},
+
+	opt_hint : {name: 'isOpenHint', label: '打开手势提示',label_en: 'Show gesture hint in the down left corner'},
+
+	txt_link : {name:'SearchEngine', label:'搜索引擎',label_en: 'Search engine'},
+
+	actionNames :
+		new Array(
+			"新标签",
+			"关标签",
+			"后退",
+			"前进",
+			"停止",
+			"重载",
+			"刷新",
+			"左标签",
+			"右标签",
+			"前端标签",
+			"后端标签",
+			"上翻页",
+			"下翻页",
+			"到最顶端",
+			"到最底端",
+			"关游览器",
+			"关全部标签除当前标签",
+			"关左标签",
+			"关右标签",
+			"当前标签开主页",
+			"恢复刚关闭标签",
+			"打开配置文件"
+		),
+		actionNames_en :
+		new Array(
+			"New tab",
+			"Close tab",
+			"Back",
+			"Forward",
+			"Stop",
+			"Reload",
+			"Refresh",
+			"Switch to the previous tab",
+			"Switch to the next tab",
+			"Switch to the first tab",
+			"Switch to the last tab",
+			"Page up",
+			"Page down",
+			"Go to the top of the page",
+			"Go to the bottom of the page",
+			"Close browser",
+			"Close all tabs except the current one",
+			"Close all left tab",
+			"Close all right tab",
+			"Go to the home page in current tab",
+			"Restore last closed tab",
+			"Open configuration"
+		),
+
+	getCookie : function(c_name)
+	{
+		if (document.cookie.length>0)
+		{
+			c_start=document.cookie.indexOf(c_name + "=");
+			if (c_start!=-1)
+			{ 
+				c_start=c_start + c_name.length+1 ;
+				c_end=document.cookie.indexOf(";",c_start);
+				if (c_end==-1) c_end=document.cookie.length;
+				return unescape(document.cookie.substring(c_start,c_end));
+			} 
+		}
+		return "";
+	},
+
+	setCookie : function(c_name,value,expiredays)
+	{
+		var exdate=new Date();
+		exdate.setDate(exdate.getDate()+expiredays);
+		document.cookie=c_name+ "=" +escape(value)+((expiredays==null) ? "" : "; expires="+exdate.toGMTString());
+	},
+
+	saveValueAndPost : function(obj)
+	{
+		if (obj.checked)
+		{
+			this.setCookie (obj.id, 'enable', 365);
+		}
+		else
+		{
+			this.setCookie (obj.id, 'disable', 365);
+		}
+		this.connection.postMessage("do:getcookie");
+	},
+	
+	checkSavedValue : function(optionname)
+	{
+		var result_htm = '';
+		var value = this.getCookie (optionname);
+		if (value == 'enable')
+		{
+			result_htm = 'checked="checked" ';
+		}
+		return result_htm;
+	},
+	
+	writeOption : function (option)
+	{
+		var label = this.isEnglish?option.label_en:option.label;
+		return '<label>' + '<input onclick="nkConfig.saveValueAndPost (this)" id="' +
+		option.name + '" type="checkbox" ' + this.checkSavedValue (option.name) +
+		'/>' + label + '</label>';
+	},
+    
+	writeText : function (option) {
+		return '<label>' + '<input id="' + option.name + '" type="text" value="' + this.getCookie (option.name) +
+		'"/>' + option.label + '</label>';        
+	},
+	
+	saveText : function () {
+		var txt = document.getElementById(this.txt_link.name).value;
+		if (txt) {
+			this.setCookie(this.txt_link.name,unescape(txt),365);  
+		}
+		this.saveGesturesValue(); 
+		this.connection.postMessage("do:getcookie");
+	},
+    
+	writeGesturesText : function ()
+	{
+		var html = '';
+		var j = 0;
+		for(i=0;i<this.actionNames.length;i++)
+		{
+			var temp = '';
+			while (j<this.gestures.length && this.gestures[j]!=',') {
+				temp += this.gestures[j];
+				j++;
+			}
+			j++;
+			if(this.isEnglish)
+			{
+				html += '<label>' + '<input id="' +
+				i + '" type="text" value="' + temp +
+				'"/>' + this.actionNames_en[i] + '</label>';
+			}else{
+				html += '<label>' + '<input id="' +
+				i + '" type="text" value="' + temp +
+				'"/>' + this.actionNames[i] + '</label>';
+			}
+		}
+		return html;
+	},
+	
+	saveGesturesValue : function()
+	{
+		var temp = new Array(this.actionNames.length);
+	
+		for(i=0;i<this.actionNames.length;i++)
+		{
+			var txt = document.getElementById(i);
+			temp[i] = txt.value;    
+		}
+		this.setCookie(this.gesturesName,temp,365);
+	},
+    
+	init : function () {
+		this.gestures = this.getCookie(this.gesturesName);
+		var value = this.getCookie(this.opt_en.name);
+		if (value == 'enable')
+		{
+			this.isEnglish = true;
+		}
+		this.connection = chrome.extension.connect({name:"nkGestures"});
+	}
+};
+
+window.onload=function ()
+{
+	nkConfig.init();
+	var config = document.getElementById ('config');
+	config.innerHTML += '<label><center>nkGestures v1.23</center></label>'
+	config.innerHTML += nkConfig.writeOption(nkConfig.opt_en);
+	config.innerHTML += nkConfig.writeOption(nkConfig.opt_odg);
+	config.innerHTML += nkConfig.writeOption(nkConfig.opt_hint);
+	config.innerHTML += nkConfig.writeOption(nkConfig.opt_otr);
+	config.innerHTML += nkConfig.writeOption(nkConfig.opt_oif);
+	config.innerHTML += nkConfig.writeText(nkConfig.txt_link);
+	if(nkConfig.isEnglish)
+	{
+		config.innerHTML += '<label>U, D, L, R - mouse movement directions (up, down, left, right)<br/>';
+		config.innerHTML += 'F, B - mouse wheel directions (front, back)</label>';
+	}else{
+		config.innerHTML += '<label>U,D,L,R 分别对应上下左右手势 F,B为鼠标滚轮前后<br/>';
+		config.innerHTML += '可以随意组合填入文本框也可为空</label>';
+	}
+	config.innerHTML += nkConfig.writeGesturesText();
+	config.innerHTML += '<input type="button" id="submit1" onclick="nkConfig.saveText()" value="OK"> <input type="button" id="submit2" onclick="window.close()" value="Close">';
+}
+</script>
+<style>
+body
+{
+	text-align: center
+}
+.top
+{
+	padding-top:	10px;
+	margin-bottom:	10px;
+	height:		50px;
+	font:		bold 30px sans;
+	color:		#fff;
+	background:	#cce
+}
+label
+{
+	display:	block
+}
+form
+{
+	margin:		auto;
+	width:		500px;
+	text-align:	left
+}
+</style>
+</head>
+<body>
+<div class="top">手势设置</div>
+<form id="config">
+</form>
+</body>
+</html>

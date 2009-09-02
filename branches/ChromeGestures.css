@@ -1,0 +1,65 @@
+@charset "utf-8";
+/* CSS Document */
+div#ChromeGestureBox.gesture_L{
+   position:fixed;
+   display:block;
+   background-image:url(chrome-extension://ikbmamdaibjoldppbafhddjjlknbfofo/gesture_left.png);
+   top:50%;
+   left:50%;
+   margin-top:-50px;
+   margin-left:-50px;
+   width:100px;
+   height:100px;
+   z-index:10000;
+}
+div#ChromeGestureBox.gesture_R{
+   position:fixed;
+   display:block;
+   background-image:url(chrome-extension://ikbmamdaibjoldppbafhddjjlknbfofo/gesture_right.png);
+   top:50%;
+   left:50%;
+   margin-top:-50px;
+   margin-left:-50px;
+   width:100px;
+   height:100px;
+   z-index:10000;
+}
+div#ChromeGestureBox.gesture_U{
+   position:fixed;
+   display:block;
+   background-image:url(chrome-extension://ikbmamdaibjoldppbafhddjjlknbfofo/gesture_up.png);
+   top:50%;
+   left:50%;
+   margin-top:-50px;
+   margin-left:-50px;
+   width:100px;
+   height:100px;
+   z-index:10000;
+}
+div#ChromeGestureBox.gesture_D{
+   position:fixed;
+   display:block;
+   background-image:url(chrome-extension://ikbmamdaibjoldppbafhddjjlknbfofo/gesture_down.png);
+   top:50%;
+   left:50%;
+   margin-top:-50px;
+   margin-left:-50px;
+   width:100px;
+   height:100px;
+   z-index:10000;
+}
+div#ChromeGestureBox.gesture_click {
+   position:fixed;
+   display:block;
+   background-image:url(chrome-extension://ikbmamdaibjoldppbafhddjjlknbfofo/gesture_click.png);
+   top:50%;
+   left:50%;
+   margin-top:-50px;
+   margin-left:-50px;
+   width:100px;
+   height:100px;
+   z-index:10000;
+}
+div#ChromeGestureBox.gesture_hide {
+   display:none;
+}
