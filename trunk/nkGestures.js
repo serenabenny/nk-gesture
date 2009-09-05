@@ -33,30 +33,21 @@ var nkGestures =
 	isOpenDrag : false,
 	isOpenHint : false,
 	isEnglish : false,
+	alpha : 1,
 
 	actionsConfig :
 	new Array(
 		//newtab:
 		"U",
-		//close:
 		"DR",
-		//goback:
 		"L",
-		//goforward:
 		"R",
-		//stop:
 		"D",
-		//reload:
 		"UD",
-		//refresh:
 		"RD",
-		//righttab:
-		"UR",
-		//lefttab:
 		"UL",
-		//firsttab:
+		"UR",
 		"LU",
-		//lasttab:
 		"RU",
 		"",
 		"",
@@ -202,6 +193,7 @@ var nkGestures =
 				this.x = event.clientX;
 				this.y = event.clientY;
 				//this.connection.postMessage("begin");
+				this.showGesture('click');
 				window.addEventListener('mousemove', this, true);
 				window.addEventListener('mouseup', this, true);
 				window.addEventListener('mousewheel', this, true);
@@ -246,6 +238,7 @@ var nkGestures =
 						this.isRightClickDisable = true;
 						this.directions += direction;
 						this.lastDirection = direction;
+						this.showGesture(this.lastDirection);
 						if(this.isOpenHint)
 						{
 							for(i = 0;i<this.actionsConfig.length;i++)
@@ -259,7 +252,7 @@ var nkGestures =
 							this.createHint( this.directions + ' : ' + actname );
 						}
 					}
-					this.drawLine(this.x, this.y, tx, ty);
+					//this.drawLine(this.x, this.y, tx, ty);
 					this.x = tx;
 					this.y = ty;
 				}
@@ -272,6 +265,7 @@ var nkGestures =
 				window.removeEventListener("mousemove", this, true);
 				window.removeEventListener("mouseup", this, true);
 				this.isRightButtonDown = false;
+				this.hideGesture();
 				if(this.directions.length)
 				{
 					for(i = 0;i<this.actionsConfig.length;i++)
@@ -366,11 +360,11 @@ var nkGestures =
 	{
 		this.directions = '';
 		this.lastDirection = null;
-		this.clearLines();
+		//this.clearLines();
 		if(this.isOpenHint)
 		    this.deleteHint();
 	},
-
+/*
 	clearLines: function()
 	{
 		var canvas = document.getElementById('_nk_drag_canvas');
@@ -407,7 +401,7 @@ var nkGestures =
 		g.lineTo(tx,ty);
 		g.stroke();
 	},
-	
+	*/
 	createHint : function (msg) {
 	var hint = document.getElementById('_nk_drag_hint');
 		if(!hint)
@@ -434,7 +428,30 @@ var nkGestures =
 			}
 			document.body.removeChild(hint);
 		}
-	}
+	},
+	showGesture : function(move){
+		var div = document.getElementById("ChromeGestureBox");
+		if (!div){
+			gestureDiv = document.createElement('div');
+			gestureDiv.id = "ChromeGestureBox";
+			gestureDiv.className = "gesture_"+move;
+			document.body.appendChild(gestureDiv);
+		}else {
+			document.getElementById("ChromeGestureBox").className="gesture_"+move;
+		}
+	},
+	
+	hideGesture : function(){
+		if(this.alpha>0){
+			this.alpha-=.1;
+			document.getElementById("ChromeGestureBox").style.opacity=this.alpha;
+			setTimeout(function(){nkGestures.hideGesture();},40);
+		}else {
+			this.alpha=1.0;
+			document.getElementById("ChromeGestureBox").style.opacity=this.alpha;
+			document.getElementById("ChromeGestureBox").className="gesture_hide";
+		}
+	} 
 };
 //监听端口接手用户自定义手势
 function string2array(string,array) {
