@@ -162,11 +162,17 @@ var nkGestures =
 	init: 	function()
 	{
 		this.connection = chrome.extension.connect({name : "nkGestures"});
+		/*
 		window.addEventListener('mousedown', this, true);
+		window.addEventListener('mousemove', this, true);
+		window.addEventListener('mouseup', this, true);
+		window.addEventListener('mousewheel', this, true);
 		window.addEventListener('contextmenu', this, true);
-		window.addEventListener ('drop', this);
+		window.addEventListener ('drop', this, false);
 		window.addEventListener ('dragover', this, false);
 		window.addEventListener ('dragenter', this, false);
+		*/
+		window.onmousedown = window.onmousemove = window.onmouseup = this;
 	},
 
 
@@ -175,8 +181,9 @@ var nkGestures =
 		window.removeEventListener('mousedown', this, true);
 		window.removeEventListener('mousemove', this, true);
 		window.removeEventListener('mouseup', this, true);
+		window.removeEventListener('mousewheel', this, true);
 		window.removeEventListener('contextmenu', this, true);
-		window.removeEventListener ('drop', this);
+		window.removeEventListener ('drop', this, false);
 		window.removeEventListener ('dragover', this, false);
 		window.removeEventListener ('dragenter', this, false);
 	},
@@ -185,18 +192,14 @@ var nkGestures =
 
 	handleEvent: function(event)
 	{
+		console.log("%s:%d:%d",event.type,event.clientX,event.clientY);
 		switch (event.type) {
 		case "mousedown":
 			if (event.button == 2)
 			{
 				this.isRightButtonDown = true;
 				this.x = event.clientX;
-				this.y = event.clientY;
-				//this.connection.postMessage("begin");
-				this.showGesture('click');
-				window.addEventListener('mousemove', this, true);
-				window.addEventListener('mouseup', this, true);
-				window.addEventListener('mousewheel', this, true);
+				this.y = event.clientY;				
 			} else
 			{
 				this.stopGesture();
@@ -211,8 +214,9 @@ var nkGestures =
 				var offsetY = ty - this.y;
 				var direction;
 				var actname = null;
-				if (Math.pow(offsetX,2) + Math.pow(offsetY,2) > 25)
+				if (Math.pow(offsetX,2) + Math.pow(offsetY,2) > 30)
 				{
+					this.isRightClickDisable = true;
 					var tan = offsetY / offsetX;
 					if(Math.abs(offsetY) > Math.abs(offsetX))
 					{
@@ -235,10 +239,8 @@ var nkGestures =
 					}
 					if(this.lastDirection != direction)
 					{
-						this.isRightClickDisable = true;
 						this.directions += direction;
 						this.lastDirection = direction;
-						this.showGesture(this.lastDirection);
 						if(this.isOpenHint)
 						{
 							for(i = 0;i<this.actionsConfig.length;i++)
@@ -252,7 +254,7 @@ var nkGestures =
 							this.createHint( this.directions + ' : ' + actname );
 						}
 					}
-					//this.drawLine(this.x, this.y, tx, ty);
+					this.drawLine(this.x, this.y, tx, ty);
 					this.x = tx;
 					this.y = ty;
 				}
@@ -261,11 +263,8 @@ var nkGestures =
 		case "mouseup":
 			if (event.button == 2 && this.isRightButtonDown)
 			{
-				window.removeEventListener('mousewheel', this, true);
-				window.removeEventListener("mousemove", this, true);
-				window.removeEventListener("mouseup", this, true);
 				this.isRightButtonDown = false;
-				this.hideGesture();
+				this.clearLines();
 				if(this.directions.length)
 				{
 					for(i = 0;i<this.actionsConfig.length;i++)
@@ -322,34 +321,37 @@ var nkGestures =
 			}
 			break;
 		case "mousewheel":
-			var direction;
-			var actname = null;
-			this.isRightClickDisable = true;
-
-			if (event.wheelDelta > 0) {
-				direction = this.Direction.forward;
-			}
-			else
-				direction = this.Direction.back;
-			if (this.lastDirection != direction) {
-				this.lastDirection = direction;
-				this.directions += direction;
-				if(this.isOpenHint)
-				{
-					for(i = 0;i<this.actionsConfig.length;i++)
-					{
-						if(this.actionsConfig[i] == this.directions)
-						{
-							actname = this.isEnglish?this.actionNames_en[i]:this.actionNames[i];
-							break;
-						}
-					}
-					this.createHint( this.directions + ' : ' + actname );
-				}
-			}
-			if (event.preventDefault)
+			if (this.isRightButtonDown)
 			{
-				event.preventDefault();
+				var direction;
+				var actname = null;
+				this.isRightClickDisable = true;
+	
+				if (event.wheelDelta > 0) {
+					direction = this.Direction.forward;
+				}
+				else
+					direction = this.Direction.back;
+				if (this.lastDirection != direction) {
+					this.lastDirection = direction;
+					this.directions += direction;
+					if(this.isOpenHint)
+					{
+						for(i = 0;i<this.actionsConfig.length;i++)
+						{
+							if(this.actionsConfig[i] == this.directions)
+							{
+								actname = this.isEnglish?this.actionNames_en[i]:this.actionNames[i];
+								break;
+							}
+						}
+						this.createHint( this.directions + ' : ' + actname );
+					}
+				}
+				if (event.preventDefault)
+				{
+					event.preventDefault();
+				}
 			}
 			break;
 		}
@@ -364,16 +366,28 @@ var nkGestures =
 		if(this.isOpenHint)
 		    this.deleteHint();
 	},
-/*
+
 	clearLines: function()
 	{
 		var canvas = document.getElementById('_nk_drag_canvas');
 		if(canvas)
 		{
+/*			for(var i=canvas.childNodes.length-1;i>-1;i--)
+			{
+				canvas.removeChild(canvas.childNodes[i]);	
+			}
+			canvas.innerHTML = '';
+			document.body.removeChild(canvas);
+			*/
+			while( canvas.lastChild )
+			{
+				canvas.removeChild( canvas.lastChild ).innerHTML = '';
+			}
+			canvas.innerHTML = '';
 			document.body.removeChild(canvas);
 		}
 	},
-
+	
 	drawLine: function(x, y, tx, ty)
 	{
 		x 	+= pageXOffset ;
@@ -383,25 +397,23 @@ var nkGestures =
 		var canvas = document.getElementById('_nk_drag_canvas');
 		if(!canvas)
 		{
-			canvas = document.createElement('canvas');
-			canvas.id = '_nk_drag_canvas';
-			canvas.width = document.width;
-			canvas.height = document.height;
-			canvas.style.position = 'absolute';
-			canvas.style.top = '0px';
-			canvas.style.left= '0px';
-			canvas.style.zIndex = "1000000";
+			canvas = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+			canvas.setAttribute("id", "_nk_drag_canvas");
+			canvas.setAttribute("width",document.width);
+			canvas.setAttribute("height",document.height);
+			canvas.setAttribute("xmlns","http://www.w3.org/2000/svg");
+			canvas.setAttribute("style","position:absolute;top:0px;left:0px");
 			document.body.appendChild(canvas);
 		}
-		var g = canvas.getContext("2d");
-		g.lineWidth = 4;
-		g.strokeStyle = "blue";
-		g.beginPath( );
-		g.moveTo(x,y);
-		g.lineTo(tx,ty);
-		g.stroke();
+		var line=document.createElementNS('http://www.w3.org/2000/svg','line');
+		line.setAttribute("x1", x);
+		line.setAttribute("y1", y);
+		line.setAttribute("x2", tx);
+		line.setAttribute("y2", ty);
+		line.setAttribute("style","stroke:blue;stroke-width:4");
+		canvas.appendChild( line );
 	},
-	*/
+
 	createHint : function (msg) {
 	var hint = document.getElementById('_nk_drag_hint');
 		if(!hint)
@@ -427,29 +439,6 @@ var nkGestures =
 				i--;
 			}
 			document.body.removeChild(hint);
-		}
-	},
-	showGesture : function(move){
-		var div = document.getElementById("ChromeGestureBox");
-		if (!div){
-			gestureDiv = document.createElement('div');
-			gestureDiv.id = "ChromeGestureBox";
-			gestureDiv.className = "gesture_"+move;
-			document.body.appendChild(gestureDiv);
-		}else {
-			document.getElementById("ChromeGestureBox").className="gesture_"+move;
-		}
-	},
-	
-	hideGesture : function(){
-		if(this.alpha>0){
-			this.alpha-=.1;
-			document.getElementById("ChromeGestureBox").style.opacity=this.alpha;
-			setTimeout(function(){nkGestures.hideGesture();},40);
-		}else {
-			this.alpha=1.0;
-			document.getElementById("ChromeGestureBox").style.opacity=this.alpha;
-			document.getElementById("ChromeGestureBox").className="gesture_hide";
 		}
 	} 
 };
@@ -495,3 +484,4 @@ chrome.extension.onConnect.addListener(function (port) {
 //initialize nkGestures Object
 nkGestures.init();
 window.addEventListener('unload', function(){ nkGestures.uninit(); }, false);
+window.captureEvents(Event.MOUSEDOWN | Event.MOUSEMOVE | Event.MOUSEUP);
