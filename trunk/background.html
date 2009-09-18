@@ -175,9 +175,6 @@ chrome.extension.onConnect.addListener(
 							newTab.selected = true;
 						chrome.tabs.create(newTab);
 						break;
-//							case "do:show":
-//								document.getElementById("dirs").innerHTML = message[1];
-//								break;
 					default:
 						break;
 					}
@@ -185,11 +182,11 @@ chrome.extension.onConnect.addListener(
 					switch(message)
 					{
 						case "do:newtab":
-							var newTab = {'windowId':port.tab.windowId, 'url':'chrome://newtab/', 'selected':false};
+							var newTab = {'windowId':port.tab.windowId, 'url':'chrome://newtab/', 'selected':true};
 							if(nkToolStrip.open_to_right)
 								newTab.index = port.tab.index + 1;
-							if(nkToolStrip.open_in_front)
-								newTab.selected = true;
+							//if(nkToolStrip.open_in_front)
+								//newTab.selected = true;
 							chrome.tabs.create(newTab);
 							break;
 						case "do:openindex":

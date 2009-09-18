@@ -8,8 +8,7 @@
 	"permissions": [ "tabs" ],
 	"run_at": "document_start",
 	"js": [ "nkGestures.js" ],
-	"matches": [ "http://*/*", "file:///*", "https://*/*", "ftp://*/*" ],
-	"css": [ "ChromeGestures.css" ]
+	"matches": [ "http://*/*", "file:///*", "https://*/*", "ftp://*/*" ]
 	} ],
 	"update_url": "http://nk-gesture.googlecode.com/svn/trunk/updates.xml"
 }
