@@ -33,6 +33,14 @@ var nkToolStrip = {
 	open_hint_name : "isOpenHint",
 	
 	is_en_name : "isEnglish",
+	
+	active_direction_name : "ActiveDirection",
+	
+	homePage_name : "HomePage",
+	
+	activeDirection :'',
+	
+	homePage : '',
 
 	open_to_right : false,
 
@@ -44,7 +52,7 @@ var nkToolStrip = {
 	
 	is_English : false,
 
-	actionsConfig :     new Array(
+	actionsConfig : new Array(
 	"DU",
 	"DR",
 	"L",
@@ -132,11 +140,16 @@ var nkToolStrip = {
 		}else{
 			this.setCookie(this.searchWebName,this.searchWeb,365);
 		}
+		
+		this.activeDirection = this.getCookie(this.active_direction_name);
+		this.homePage = this.getCookie(this.homePage_name);
 	},
 
 	refreshCookie : function () {
 		this.actionsConfig = this.getCookie(this.gesturesName);
 		this.searchWeb = this.getCookie(this.searchWebName);
+		this.activeDirection = this.getCookie(this.active_direction_name);
+		this.homePage = this.getCookie(this.homePage_name);
 		if (this.getCookie (this.opr_name) == 'enable') this.open_to_right = true;
 		else this.open_to_right = false;
 		if (this.getCookie (this.oif_name) == 'enable') this.open_in_front = true;
@@ -160,6 +173,7 @@ chrome.extension.onConnect.addListener(
 		port.onMessage.addListener(
 			function(message)
 			{
+				var newTab;
 				var link = '';
 				switch(message[0])
 				{
@@ -167,11 +181,11 @@ chrome.extension.onConnect.addListener(
 						if (message[1].indexOf("http://") < 0)
 							link += nkToolStrip.searchWeb;
 					case "do:dragurl":
-							link += message[1];
-						var newTab = {'windowId':port.tab.windowId, 'url':link, 'selected':false};
+						link += message[1];
+						newTab = {'windowId':port.tab.windowId, 'url':link, 'selected':false};
 						if(nkToolStrip.open_to_right)
 							newTab.index = port.tab.index+1;
-						if(nkToolStrip.open_in_front)
+						if(message[2] == nkToolStrip.activeDirection || nkToolStrip.open_in_front)
 							newTab.selected = true;
 						chrome.tabs.create(newTab);
 						break;
@@ -182,19 +196,20 @@ chrome.extension.onConnect.addListener(
 					switch(message)
 					{
 						case "do:newtab":
-							var newTab = {'windowId':port.tab.windowId, 'url':'chrome://newtab/', 'selected':true};
+							newTab = {'windowId':port.tab.windowId, 'url':'chrome://newtab/', 'selected':true};
 							if(nkToolStrip.open_to_right)
 								newTab.index = port.tab.index + 1;
-							//if(nkToolStrip.open_in_front)
-								//newTab.selected = true;
 							chrome.tabs.create(newTab);
 							break;
 						case "do:openindex":
-							chrome.tabs.update(port.tab.id,{'url':'chrome://newtab/', 'selected':true});
+							chrome.tabs.update(port.tab.id,{'url':nkToolStrip.homePage, 'selected':true});
 							break;
 						case "do:restore":
 							capture = false;
-							chrome.tabs.create({'windowId':port.tab.windowId, 'index':port.tab.index + 1, 'url':historyTabRemove.pop()[1], 'selected':true});
+							newTab = {'windowId':port.tab.windowId, 'url':historyTabRemove.pop()[1], 'selected':true};
+							if(nkToolStrip.open_to_right)
+								newTab.index = port.tab.index + 1;
+							chrome.tabs.create(newTab);
 							capture = true;
 							break;
 						case "do:close":
