@@ -33,7 +33,6 @@ var nkGestures =
 	isOpenDrag : false,
 	isOpenHint : false,
 	isEnglish : false,
-	alpha : 1,
 
 	actionsConfig :
 	new Array(
@@ -162,17 +161,16 @@ var nkGestures =
 	init: 	function()
 	{
 		this.connection = chrome.extension.connect({name : "nkGestures"});
-		/*
 		window.addEventListener('mousedown', this, true);
-		window.addEventListener('mousemove', this, true);
-		window.addEventListener('mouseup', this, true);
-		window.addEventListener('mousewheel', this, true);
+//		window.addEventListener('mousemove', this, true);
+//		window.addEventListener('mouseup', this, true);
+//		window.addEventListener('mousewheel', this, true);
 		window.addEventListener('contextmenu', this, true);
 		window.addEventListener ('drop', this, false);
+		window.addEventListener ('drag', this, false);
+		window.addEventListener ('dragstart', this, false);
 		window.addEventListener ('dragover', this, false);
 		window.addEventListener ('dragenter', this, false);
-		*/
-		window.onmousedown = window.onmousemove = window.onmouseup = this;
 	},
 
 
@@ -183,29 +181,36 @@ var nkGestures =
 		window.removeEventListener('mouseup', this, true);
 		window.removeEventListener('mousewheel', this, true);
 		window.removeEventListener('contextmenu', this, true);
-		window.removeEventListener ('drop', this, false);
-		window.removeEventListener ('dragover', this, false);
-		window.removeEventListener ('dragenter', this, false);
+		window.removeEventListener('drop', this, false);
+		window.removeEventListener('drag', this, false);
+		window.removeEventListener('dragstart', this, false);
+		window.removeEventListener('dragover', this, false);
+		window.removeEventListener('dragenter', this, false);
 	},
 
 
 
 	handleEvent: function(event)
 	{
-		console.log("%s:%d:%d",event.type,event.clientX,event.clientY);
 		switch (event.type) {
 		case "mousedown":
 			if (event.button == 2)
 			{
 				this.isRightButtonDown = true;
 				this.x = event.clientX;
-				this.y = event.clientY;				
+				this.y = event.clientY;
+				window.addEventListener('mousemove', this, true);
+				window.addEventListener('mouseup', this, true);
+				window.addEventListener('mousewheel', this, true);
+				window.removeEventListener('mousedown', this, true);
 			} else
 			{
 				this.stopGesture();
 			}
 			break;
+			
 		case "mousemove":
+		case "drag":
 			if (this.isRightButtonDown)
 			{
 				var tx		= event.clientX;
@@ -260,9 +265,14 @@ var nkGestures =
 				}
 			}
 			break;
+			
 		case "mouseup":
 			if (event.button == 2 && this.isRightButtonDown)
 			{
+				window.addEventListener('mousedown', this, true);
+				window.removeEventListener('mousemove', this, true);
+				window.removeEventListener('mouseup', this, true);
+				window.removeEventListener('mousewheel', this, true);
 				this.isRightButtonDown = false;
 				this.clearLines();
 				if(this.directions.length)
@@ -279,6 +289,7 @@ var nkGestures =
 				this.stopGesture();
 			}
 			break;
+			
 		case "contextmenu":
 			if(this.isRightClickDisable)
 			{
@@ -287,29 +298,33 @@ var nkGestures =
 				event.preventDefault();
 			}
 			break;
+			
 		case "drop":
 			if (!this.isOpenDrag) {
 				break;
 			}
+			this.isRightButtonDown = false;
+			var direction = this.directions;
+			this.stopGesture();
+
 			if (event.preventDefault) event.preventDefault ();
 			var link = window.getSelection().toString();
 			if (link != '') {
-				this.connection.postMessage(new Array("do:dragtxt", link));
+				this.connection.postMessage(new Array("do:dragtxt", link, direction));
 				break;
 			}
 			link = event.dataTransfer.getData("URL");
 			if (link != '') {
-				this.connection.postMessage(new Array("do:dragurl", link));
+				this.connection.postMessage(new Array("do:dragurl", link, direction));
 				break;
 			}
-			link = event.dataTransfer.getData("URL");
+			link = event.dataTransfer.getData("Text");
 			if (link != '') {
-				this.connection.postMessage(new Array("do:dragtxt", link));
+				this.connection.postMessage(new Array("do:dragtxt", link, direction));
 				break;
 			}
-			alert(link);
-			this.connection.postMessage(new Array("do:drag", link));
 			break;
+			
 		case "dragover":
 		case "dragenter":
 			if (!this.isOpenDrag) {
@@ -320,6 +335,16 @@ var nkGestures =
 				event.preventDefault();
 			}
 			break;
+			
+		case "dragstart":
+			if (!this.isOpenDrag) {
+				break;
+			}
+			this.x = event.clientX;
+			this.y = event.clientY;
+			this.isRightButtonDown = true;
+			break;
+			
 		case "mousewheel":
 			if (this.isRightButtonDown)
 			{
@@ -362,43 +387,35 @@ var nkGestures =
 	{
 		this.directions = '';
 		this.lastDirection = null;
-		//this.clearLines();
+		this.clearLines();
 		if(this.isOpenHint)
 		    this.deleteHint();
 	},
 
 	clearLines: function()
 	{
-		var canvas = document.getElementById('_nk_drag_canvas');
+		var canvas = document.getElementById('_nk_drag_svgline');
 		if(canvas)
 		{
-/*			for(var i=canvas.childNodes.length-1;i>-1;i--)
-			{
-				canvas.removeChild(canvas.childNodes[i]);	
-			}
-			canvas.innerHTML = '';
-			document.body.removeChild(canvas);
-			*/
 			while( canvas.lastChild )
 			{
 				canvas.removeChild( canvas.lastChild ).innerHTML = '';
 			}
-			canvas.innerHTML = '';
-			document.body.removeChild(canvas);
+			document.body.removeChild(canvas).innerHTML = '';
 		}
 	},
 	
 	drawLine: function(x, y, tx, ty)
 	{
-		x 	+= pageXOffset ;
-		tx 	+= pageXOffset ;
+		x 	+= pageXOffset;
+		tx 	+= pageXOffset;
 		y 	+= pageYOffset;
 		ty 	+= pageYOffset;
-		var canvas = document.getElementById('_nk_drag_canvas');
+		var canvas = document.getElementById('_nk_drag_svgline');
 		if(!canvas)
 		{
 			canvas = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-			canvas.setAttribute("id", "_nk_drag_canvas");
+			canvas.setAttribute("id", "_nk_drag_svgline");
 			canvas.setAttribute("width",document.width);
 			canvas.setAttribute("height",document.height);
 			canvas.setAttribute("xmlns","http://www.w3.org/2000/svg");
@@ -484,4 +501,3 @@ chrome.extension.onConnect.addListener(function (port) {
 //initialize nkGestures Object
 nkGestures.init();
 window.addEventListener('unload', function(){ nkGestures.uninit(); }, false);
-window.captureEvents(Event.MOUSEDOWN | Event.MOUSEMOVE | Event.MOUSEUP);

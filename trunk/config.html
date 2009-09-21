@@ -13,7 +13,7 @@ var nkConfig = {
 	
 	isEnglish : false,
 
-	opt_en : {name: 'isEnglish', label: 'English Language',label_en: '英文'},
+	opt_en : {name: 'isEnglish', label: 'English Language',label_en: '使用英文'},
 
 	opt_otr : {name: 'open_to_right', label: '当前标签右侧打开新标签',label_en: 'Open tabs next to the current tab'},
 
@@ -22,8 +22,12 @@ var nkConfig = {
 	opt_odg : {name: 'isOpenDrag', label: '打开拖放',label_en: 'Eable drag and drop'},
 
 	opt_hint : {name: 'isOpenHint', label: '打开手势提示',label_en: 'Show gesture hint in the down left corner'},
+	
+	txt_drag : {name:'ActiveDirection', label:'激活拖拽新标签方向(U,D,L,R)',label_en: 'the direction of the drag to make tabs in foreground(U,D,L,R)'},
 
 	txt_link : {name:'SearchEngine', label:'搜索引擎',label_en: 'Search engine'},
+	
+	txt_home : {name:'HomePage', label:'自定义主页(eg http://*)',label_en: 'Customize HomePage(eg http://*)'},
 
 	actionNames :
 		new Array(
@@ -110,6 +114,8 @@ var nkConfig = {
 			this.setCookie (obj.id, 'disable', 365);
 		}
 		this.connection.postMessage("do:getcookie");
+		if(obj.id == 'isEnglish')
+			window.location.reload();
 	},
 	
 	checkSavedValue : function(optionname)
@@ -130,17 +136,20 @@ var nkConfig = {
 		option.name + '" type="checkbox" ' + this.checkSavedValue (option.name) +
 		'/>' + label + '</label>';
 	},
-    
+
 	writeText : function (option) {
+		var label = this.isEnglish?option.label_en:option.label;
 		return '<label>' + '<input id="' + option.name + '" type="text" value="' + this.getCookie (option.name) +
-		'"/>' + option.label + '</label>';        
+		'"/>' + label + '</label>';        
 	},
-	
-	saveText : function () {
-		var txt = document.getElementById(this.txt_link.name).value;
-		if (txt) {
-			this.setCookie(this.txt_link.name,unescape(txt),365);  
-		}
+	saveText : function(obj) {
+		var txt = document.getElementById(obj.name).value;
+		this.setCookie(obj.name,unescape(txt),365);  
+	},
+	saveTexts : function () {
+		this.saveText(this.txt_link);
+		this.saveText(this.txt_drag);
+		this.saveText(this.txt_home);
 		this.saveGesturesValue(); 
 		this.connection.postMessage("do:getcookie");
 	},
@@ -204,7 +213,9 @@ window.onload=function ()
 	config.innerHTML += nkConfig.writeOption(nkConfig.opt_hint);
 	config.innerHTML += nkConfig.writeOption(nkConfig.opt_otr);
 	config.innerHTML += nkConfig.writeOption(nkConfig.opt_oif);
+	config.innerHTML += nkConfig.writeText(nkConfig.txt_drag);
 	config.innerHTML += nkConfig.writeText(nkConfig.txt_link);
+	config.innerHTML += nkConfig.writeText(nkConfig.txt_home);
 	if(nkConfig.isEnglish)
 	{
 		config.innerHTML += '<label>U, D, L, R - mouse movement directions (up, down, left, right)<br/>';
@@ -214,7 +225,7 @@ window.onload=function ()
 		config.innerHTML += '可以随意组合填入文本框也可为空</label>';
 	}
 	config.innerHTML += nkConfig.writeGesturesText();
-	config.innerHTML += '<input type="button" id="submit1" onclick="nkConfig.saveText()" value="OK"> <input type="button" id="submit2" onclick="window.close()" value="Close">';
+	config.innerHTML += '<input type="button" id="submit1" onclick="nkConfig.saveTexts()" value="OK"> <input type="button" id="submit2" onclick="window.close()" value="Close">';
 }
 </script>
 <style>
