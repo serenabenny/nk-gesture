@@ -185,7 +185,7 @@ chrome.extension.onConnect.addListener(
 						newTab = {'windowId':port.tab.windowId, 'url':link, 'selected':false};
 						if(nkToolStrip.open_to_right)
 							newTab.index = port.tab.index+1;
-						if(message[2] == nkToolStrip.activeDirection || nkToolStrip.open_in_front)
+						if(nkToolStrip.activeDirection.indexOf(message[2])!=-1 || nkToolStrip.open_in_front) //支持多个方向拖拽设置
 							newTab.selected = true;
 						chrome.tabs.create(newTab);
 						break;
