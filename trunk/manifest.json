@@ -1,6 +1,6 @@
 {
 	"name": "nkGestures",
-	"version": "1.2.4",
+	"version": "1.2.5",
 	"description": "打开配置文件 chrome-extension://ikbmamdaibjoldppbafhddjjlknbfofo/config.html",
 	"permissions": [ "http://*/*", "https://*/*", "tabs" ],
 	"background_page": "background.html",

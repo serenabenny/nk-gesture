@@ -256,10 +256,12 @@ var nkGestures =
 									break;
 								}
 							}
-							this.createHint( this.directions + ' : ' + actname );
+							if(event.type != "drag")
+								this.createHint( this.directions + ' : ' + actname );
 						}
 					}
-					this.drawLine(this.x, this.y, tx, ty);
+					if(event.type != "drag")
+						this.drawLine(this.x, this.y, tx, ty);
 					this.x = tx;
 					this.y = ty;
 				}
