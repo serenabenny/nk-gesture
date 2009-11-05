@@ -1,14 +1,16 @@
 {
-	"name": "nkGestures",
-	"version": "1.2.5",
-	"description": "打开配置文件 chrome-extension://ikbmamdaibjoldppbafhddjjlknbfofo/config.html",
-	"permissions": [ "http://*/*", "https://*/*", "tabs" ],
-	"background_page": "background.html",
-	"content_scripts": [ {
-	"permissions": [ "tabs" ],
-	"run_at": "document_start",
-	"js": [ "nkGestures.js" ],
-	"matches": [ "http://*/*", "file:///*", "https://*/*", "ftp://*/*" ]
-	} ],
-	"update_url": "http://nk-gesture.googlecode.com/svn/trunk/updates.xml"
+   "background_page": "background.html",
+   "content_scripts": [ {
+      "js": [ "nkGestures.js" ],
+      "matches": [ "http://*/*", "file:///*", "https://*/*", "ftp://*/*" ],
+      "permissions": [ "tabs" ],
+      "run_at": "document_start"
+   } ],
+   "description": "\u6253\u5F00\u914D\u7F6E\u6587\u4EF6 chrome-extension://ikbmamdaibjoldppbafhddjjlknbfofo/config.html",
+   "key": "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDLI8Gki/rwGU6L4BDPzw5VVlUprAHRe98b8w0/tLUHyk1mFRQ4b6ZsnO47azqmBb++eNs6LgU5vlCINdm0GvaIVC3y0TB2/I/lhT1a8i28TkeqoupBla7pPNHeZk3dLe2L/Bg62cRuRccEc8Ng3Ng8PN4vtDqgViH007Q6mvqS0wIDAQAB",
+   "name": "nkGestures",
+   "permissions": [ "http://*/*", "https://*/*", "tabs" ],
+   "update_url": "http://nk-gesture.googlecode.com/svn/trunk/updates.xml",
+   "version": "1.2.5",
+   "options_page": "config.html"
 }

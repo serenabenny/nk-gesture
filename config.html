@@ -15,9 +15,9 @@ var nkConfig = {
 
 	opt_en : {name: 'isEnglish', label: 'English Language',label_en: '使用英文'},
 
-	opt_otr : {name: 'open_to_right', label: '当前标签右侧打开新标签',label_en: 'Open tabs next to the current tab'},
+	opt_otr : {name: 'isOpenToRight', label: '当前标签右侧打开新标签',label_en: 'Open tabs next to the current tab'},
 
-	opt_oif : {name: 'open_in_front', label: '拖拽激活新标签',label_en: 'Open new tabs in foreground'},
+	opt_oif : {name: 'isOpenInFront', label: '拖拽激活新标签',label_en: 'Open new tabs in foreground'},
 
 	opt_odg : {name: 'isOpenDrag', label: '打开拖放',label_en: 'Eable drag and drop'},
 
@@ -107,11 +107,13 @@ var nkConfig = {
 	{
 		if (obj.checked)
 		{
-			this.setCookie (obj.id, 'enable', 365);
+			//this.setCookie (obj.id, 'enable', 365);
+			localStorage[obj.id] = 'enable';
 		}
 		else
 		{
-			this.setCookie (obj.id, 'disable', 365);
+			//this.setCookie (obj.id, 'disable', 365);
+			localStorage[obj.id] = 'disable';
 		}
 		this.connection.postMessage("do:getcookie");
 		if(obj.id == 'isEnglish')
@@ -121,7 +123,8 @@ var nkConfig = {
 	checkSavedValue : function(optionname)
 	{
 		var result_htm = '';
-		var value = this.getCookie (optionname);
+		//var value = this.getCookie (optionname);
+		var value = localStorage[optionname];
 		if (value == 'enable')
 		{
 			result_htm = 'checked="checked" ';
@@ -139,13 +142,16 @@ var nkConfig = {
 
 	writeText : function (option) {
 		var label = this.isEnglish?option.label_en:option.label;
-		return '<label>' + '<input id="' + option.name + '" type="text" value="' + this.getCookie (option.name) +
+		return '<label>' + '<input id="' + option.name + '" type="text" value="' + localStorage[option.name] +
 		'"/>' + label + '</label>';        
 	},
+	
 	saveText : function(obj) {
 		var txt = document.getElementById(obj.name).value;
-		this.setCookie(obj.name,unescape(txt),365);  
+		//this.setCookie(obj.name,unescape(txt),365);  
+		localStorage[obj.name] = unescape(txt);
 	},
+	
 	saveTexts : function () {
 		this.saveText(this.txt_link);
 		this.saveText(this.txt_drag);
@@ -189,12 +195,15 @@ var nkConfig = {
 			var txt = document.getElementById(i);
 			temp[i] = txt.value;    
 		}
-		this.setCookie(this.gesturesName,temp,365);
+		//this.setCookie(this.gesturesName,temp,365);
+		localStorage[this.gesturesName] = temp;
 	},
     
 	init : function () {
-		this.gestures = this.getCookie(this.gesturesName);
-		var value = this.getCookie(this.opt_en.name);
+		//this.gestures = this.getCookie(this.gesturesName);
+		this.gestures = localStorage[this.gesturesName];
+		//var value = this.getCookie(this.opt_en.name);
+		var value = localStorage[this.opt_en.name];
 		if (value == 'enable')
 		{
 			this.isEnglish = true;

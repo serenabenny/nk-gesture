@@ -22,9 +22,9 @@ var nkToolStrip = {
 
 	open_drag_name : "isOpenDrag",
 
-	opr_name : "open_to_right",
+	opr_name : "isOpenToRight",
 
-	oif_name : "open_in_front",
+	oif_name : "isOpenInFront",
 
 	searchWebName : "SearchEngine",
 
@@ -42,13 +42,13 @@ var nkToolStrip = {
 	
 	homePage : '',
 
-	open_to_right : false,
+	isOpenToRight : false,
 
-	open_drag : false,
+	isOpenDrag : false,
 
-	open_in_front : false,
+	isOpenInFront : false,
 	
-	open_hint : false,
+	isOpenHint : false,
 	
 	is_English : false,
 
@@ -77,29 +77,6 @@ var nkToolStrip = {
 	"URDLD"
 	),
 
-	getCookie : function(c_name)
-	{
-		if (document.cookie.length>0)
-		{
-			c_start=document.cookie.indexOf(c_name + "=");
-			if (c_start!=-1)
-			{
-				c_start=c_start + c_name.length+1 ;
-				c_end=document.cookie.indexOf(";",c_start);
-				if (c_end==-1) c_end=document.cookie.length;
-				return unescape(document.cookie.substring(c_start,c_end));
-			}
-		}
-		return "";
-	},
-
-	setCookie : function(c_name,value,expiredays)
-	{
-		var exdate=new Date();
-		exdate.setDate(exdate.getDate()+expiredays);
-		document.cookie=c_name+ "=" +escape(value)+((expiredays==null) ? "" : "; expires="+exdate.toGMTString());
-	},
-
 	string2array : function(string,array)
 	{
 		var i,j;
@@ -117,50 +94,57 @@ var nkToolStrip = {
 	},
 
 	init : function () {
-		if (this.getCookie (this.open_drag_name) == 'enable') this.open_drag = true;
-		
-		if (this.getCookie (this.open_hint_name) == 'enable') this.open_hint = true;
 
-		if (this.getCookie (this.opr_name) == 'enable') this.open_to_right = true;
-
-		if (this.getCookie (this.oif_name) == 'enable') this.open_in_front = true;
-		
-		if (this.getCookie (this.is_en_name) == 'enable') this.isEnglish = true;
-
-		var gestures = this.getCookie(this.gesturesName);
-		if (gestures) {
-			this.actionsConfig = gestures;
-		}else{
-			this.setCookie(this.gesturesName,this.actionsConfig,365);
+		if ( localStorage[this.open_drag_name] == 'enable' ) {
+			this.isOpenDrag = true;
 		}
-
-		var searchWeb = this.getCookie(this.searchWebName);
-		if (searchWeb) {
-			this.searchWeb = searchWeb;
-		}else{
-			this.setCookie(this.searchWebName,this.searchWeb,365);
-		}
+		else this.isOpenDrag = false;
 		
-		this.activeDirection = this.getCookie(this.active_direction_name);
-		this.homePage = this.getCookie(this.homePage_name);
-	},
-
-	refreshCookie : function () {
-		this.actionsConfig = this.getCookie(this.gesturesName);
-		this.searchWeb = this.getCookie(this.searchWebName);
-		this.activeDirection = this.getCookie(this.active_direction_name);
-		this.homePage = this.getCookie(this.homePage_name);
-		if (this.getCookie (this.opr_name) == 'enable') this.open_to_right = true;
-		else this.open_to_right = false;
-		if (this.getCookie (this.oif_name) == 'enable') this.open_in_front = true;
-		else this.open_in_front = false;
-		if (this.getCookie (this.open_drag_name) == 'enable') this.open_drag = true;
-		else this.open_drag = false;
-		if (this.getCookie (this.open_hint_name) == 'enable') this.open_hint = true;
-		else this.open_hint = false;
-		if (this.getCookie (this.is_en_name) == 'enable') this.isEnglish = true;
+		if ( localStorage[this.open_hint_name] == 'enable' ) {
+			this.isOpenHint = true;
+		}
+		else this.isOpenHint = false;
+		
+		if ( localStorage[this.is_en_name] == 'enable' ) {
+			this.isEnglish = true;
+		}
 		else this.isEnglish = false;
+		
+		if ( localStorage[this.opr_name] == 'enable' ) {
+			this.isOpenToRight = true;
+		}
+		else this.isOpenToRight = false;
+		
+		if ( localStorage[this.oif_name] == 'enable' ) {
+			this.isOpenInFront = true;
+		}
+		else this.isOpenInFront = false;
+		
+		if (localStorage[this.gesturesName]) {
+		    this.actionsConfig = localStorage[this.gesturesName];
+		}else{
+		    localStorage[this.gesturesName] = this.actionsConfig;
+		}
+		
+        if (localStorage[this.searchWebName]) {
+            this.searchWeb = localStorage[this.searchWebName];
+		}else{
+		    localStorage[this.searchWebName] = this.searchWeb;
+		}
+		
+        if (localStorage[this.homePage_name]) {
+            this.homePage = localStorage[this.homePage_name];
+		}else{
+		    localStorage[this.homePage_name] = this.homePage;
+		}
+		
+        if (localStorage[this.active_direction_name]) {
+            this.activeDirection = localStorage[this.active_direction_name];
+		}else{
+		    localStorage[this.active_direction_name] = this.activeDirection;
+		}	
 	}
+	
 };
 
 nkToolStrip.init();
@@ -183,9 +167,9 @@ chrome.extension.onConnect.addListener(
 					case "do:dragurl":
 						link += message[1];
 						newTab = {'windowId':port.tab.windowId, 'url':link, 'selected':false};
-						if(nkToolStrip.open_to_right)
+						if(nkToolStrip.isOpenToRight)
 							newTab.index = port.tab.index+1;
-						if(nkToolStrip.activeDirection.indexOf(message[2])!=-1 || nkToolStrip.open_in_front) //支持多个方向拖拽设置
+						if(nkToolStrip.activeDirection.indexOf(message[2])!=-1 || nkToolStrip.isOpenInFront) //支持多个方向拖拽设置
 							newTab.selected = true;
 						chrome.tabs.create(newTab);
 						break;
@@ -197,7 +181,7 @@ chrome.extension.onConnect.addListener(
 					{
 						case "do:newtab":
 							newTab = {'windowId':port.tab.windowId, 'url':'chrome://newtab/', 'selected':true};
-							if(nkToolStrip.open_to_right)
+							if(nkToolStrip.isOpenToRight)
 								newTab.index = port.tab.index + 1;
 							chrome.tabs.create(newTab);
 							break;
@@ -207,7 +191,7 @@ chrome.extension.onConnect.addListener(
 						case "do:restore":
 							capture = false;
 							newTab = {'windowId':port.tab.windowId, 'url':historyTabRemove.pop()[1], 'selected':true};
-							if(nkToolStrip.open_to_right)
+							if(nkToolStrip.isOpenToRight)
 								newTab.index = port.tab.index + 1;
 							chrome.tabs.create(newTab);
 							capture = true;
@@ -285,7 +269,7 @@ chrome.extension.onConnect.addListener(
 						chrome.tabs.create({'windowId':port.tab.windowId, 'index':port.tab.index + 1, 'url':'config.html', 'selected':true});
 						break;
 					case "do:getcookie":
-						nkToolStrip.refreshCookie();
+						nkToolStrip.init();
 						break;
 					default:
 						break;
@@ -293,12 +277,13 @@ chrome.extension.onConnect.addListener(
 			}
 		);
 //发送用户定义的手势到连接来的tabs
+
 		var connection = chrome.tabs.connect(port.tab.id,{name : "nkGesturesTab"});
 		connection.postMessage(nkToolStrip.actionsConfig);
-		if ( nkToolStrip.open_drag == true ) {
+		if ( nkToolStrip.isOpenDrag == true ) {
 			connection.postMessage('OpenDrag');
 		}
-		if ( nkToolStrip.open_hint == true ) {
+		if ( nkToolStrip.isOpenHint == true ) {
 			connection.postMessage('OpenHint');
 			if(nkToolStrip.isEnglish)
 				connection.postMessage('isEnglish');

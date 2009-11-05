@@ -22,6 +22,11 @@
 
 var nkGestures =
 {
+	open_drag_name : "isOpenDrag",
+	open_hint_name : "isOpenHint",
+	is_en_name : "isEnglish",
+	gesturesName : "GesturesArray",
+
 	Direction : { up:'U' , right:'R', down:'D', left:'L', forward:'F', back:'B' },
 	directions : '',
 	lastDirection : null,
