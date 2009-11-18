@@ -9,7 +9,7 @@ var nkConfig = {
 
 	connection : null,
 
-	gestures : null,
+	gestures : 	null,
 	
 	isEnglish : false,
 
@@ -170,7 +170,7 @@ var nkConfig = {
 			while (j<this.gestures.length && this.gestures[j]!=',') {
 				temp += this.gestures[j];
 				j++;
-			}
+			}		
 			j++;
 			if(this.isEnglish)
 			{
@@ -216,7 +216,6 @@ window.onload=function ()
 {
 	nkConfig.init();
 	var config = document.getElementById ('config');
-	config.innerHTML += '<label><center>nkGestures v1.23</center></label>'
 	config.innerHTML += nkConfig.writeOption(nkConfig.opt_en);
 	config.innerHTML += nkConfig.writeOption(nkConfig.opt_odg);
 	config.innerHTML += nkConfig.writeOption(nkConfig.opt_hint);
