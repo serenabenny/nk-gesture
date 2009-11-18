@@ -167,9 +167,9 @@ var nkGestures =
 	{
 		this.connection = chrome.extension.connect({name : "nkGestures"});
 		window.addEventListener('mousedown', this, true);
-//		window.addEventListener('mousemove', this, true);
-//		window.addEventListener('mouseup', this, true);
-//		window.addEventListener('mousewheel', this, true);
+		window.addEventListener('mousemove', this, true);
+		window.addEventListener('mouseup', this, true);
+		window.addEventListener('mousewheel', this, true);
 		window.addEventListener('contextmenu', this, true);
 		window.addEventListener ('drop', this, false);
 		window.addEventListener ('drag', this, false);
@@ -201,13 +201,15 @@ var nkGestures =
 		case "mousedown":
 			if (event.button == 2)
 			{
+				//console.log("mouse down");
 				this.isRightButtonDown = true;
 				this.x = event.clientX;
 				this.y = event.clientY;
-				window.addEventListener('mousemove', this, true);
-				window.addEventListener('mouseup', this, true);
-				window.addEventListener('mousewheel', this, true);
-				window.removeEventListener('mousedown', this, true);
+//				window.captureEvents(Event.MouseMove|Event.MouseUp);
+//				window.addEventListener('mousemove', this, true);
+//				window.addEventListener('mouseup', this, true);
+//				window.addEventListener('mousewheel', this, true);
+//				window.removeEventListener('mousedown', this, true);				
 			} else
 			{
 				this.stopGesture();
@@ -226,6 +228,7 @@ var nkGestures =
 				var actname = null;
 				if (Math.pow(offsetX,2) + Math.pow(offsetY,2) > 30)
 				{
+					//console.log('Mouse Move:' + event.clientX + ':' + event.clientY );
 					this.isRightClickDisable = true;
 					var tan = offsetY / offsetX;
 					if(Math.abs(offsetY) > Math.abs(offsetX))
@@ -276,10 +279,12 @@ var nkGestures =
 		case "mouseup":
 			if (event.button == 2 && this.isRightButtonDown)
 			{
-				window.addEventListener('mousedown', this, true);
-				window.removeEventListener('mousemove', this, true);
-				window.removeEventListener('mouseup', this, true);
-				window.removeEventListener('mousewheel', this, true);
+				//console.log("mouse up");
+//				window.releaseEvents(Event.MouseMove|Event.MouseUp);
+//				window.addEventListener('mousedown', this, true);
+//				window.removeEventListener('mousemove', this, true);
+//				window.removeEventListener('mouseup', this, true);
+//				window.removeEventListener('mousewheel', this, true);				
 				this.isRightButtonDown = false;
 				this.clearLines();
 				if(this.directions.length)
@@ -505,6 +510,10 @@ chrome.extension.onConnect.addListener(function (port) {
 		}
 	});
 });
+
 //initialize nkGestures Object
-nkGestures.init();
-window.addEventListener('unload', function(){ nkGestures.uninit(); }, false);
+if ( window.parent == window ) {
+	window.captureEvents(Event.MouseDown|Event.MouseMove|Event.MouseUp);
+	nkGestures.init();
+//	window.addEventListener('unload', function(){ nkGestures.uninit(); }, false);
+}
