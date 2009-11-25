@@ -6,17 +6,16 @@
       "permissions": [ "tabs" ],
       "run_at": "document_start"
    } ],
-   "description": "\u6253\u5F00\u914D\u7F6E\u6587\u4EF6 chrome-extension://ikbmamdaibjoldppbafhddjjlknbfofo/config.html",
+   "description": "nkGestures Mouse Gestures",
    "icons": {
-      "128": "icon128.png",
-      "16": "icon16.png",
-      "32": "icon32.png",
-      "48": "icon48.png"
+      "128": "/icon/icon128.png",
+      "16": "/icon/icon16.png",
+      "32": "/icon/icon32.png",
+      "48": "/icon/icon48.png"
    },
-   "key": "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDLI8Gki/rwGU6L4BDPzw5VVlUprAHRe98b8w0/tLUHyk1mFRQ4b6ZsnO47azqmBb++eNs6LgU5vlCINdm0GvaIVC3y0TB2/I/lhT1a8i28TkeqoupBla7pPNHeZk3dLe2L/Bg62cRuRccEc8Ng3Ng8PN4vtDqgViH007Q6mvqS0wIDAQAB",
    "name": "nkGestures",
    "options_page": "config.html",
    "permissions": [ "http://*/*", "https://*/*", "tabs" ],
    "update_url": "http://nk-gesture.googlecode.com/svn/trunk/updates.xml",
-   "version": "1.2.6"
+   "version": "1.2.7"
 }

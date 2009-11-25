@@ -166,11 +166,27 @@ var nkGestures =
 	init: 	function()
 	{
 		this.connection = chrome.extension.connect({name : "nkGestures"});
-		window.addEventListener('mousedown', this, true);
-		window.addEventListener('mousemove', this, true);
-		window.addEventListener('mouseup', this, true);
-		window.addEventListener('mousewheel', this, true);
-		window.addEventListener('contextmenu', this, true);
+		this.connection.onMessage.addListener(function (message) {
+			if ( message == 'OpenDrag' ) {
+				nkGestures.isOpenDrag = true;
+			}
+			else if( message == 'OpenHint' )
+			{
+				nkGestures.isOpenHint = true;
+			}
+			else if( message == 'isEnglish' )
+			{
+				nkGestures.isEnglish = true;
+			}
+			else{
+				string2array(message,nkGestures.actionsConfig );
+			}
+		});
+		window.addEventListener('mousedown', this, false);
+		window.addEventListener('mousemove', this, false);
+		window.addEventListener('mouseup', this, false);
+		window.addEventListener('mousewheel', this, false);
+		window.addEventListener('contextmenu', this, false);
 		window.addEventListener ('drop', this, false);
 		window.addEventListener ('drag', this, false);
 		window.addEventListener ('dragstart', this, false);
@@ -181,11 +197,11 @@ var nkGestures =
 
 	uninit: function()
 	{
-		window.removeEventListener('mousedown', this, true);
-		window.removeEventListener('mousemove', this, true);
-		window.removeEventListener('mouseup', this, true);
-		window.removeEventListener('mousewheel', this, true);
-		window.removeEventListener('contextmenu', this, true);
+		window.removeEventListener('mousedown', this, false);
+		window.removeEventListener('mousemove', this, false);
+		window.removeEventListener('mouseup', this, false);
+		window.removeEventListener('mousewheel', this, false);
+		window.removeEventListener('contextmenu', this, false);
 		window.removeEventListener('drop', this, false);
 		window.removeEventListener('drag', this, false);
 		window.removeEventListener('dragstart', this, false);
@@ -209,7 +225,7 @@ var nkGestures =
 //				window.addEventListener('mousemove', this, true);
 //				window.addEventListener('mouseup', this, true);
 //				window.addEventListener('mousewheel', this, true);
-//				window.removeEventListener('mousedown', this, true);				
+//				window.removeEventListener('mousedown', this, true);
 			} else
 			{
 				this.stopGesture();
@@ -228,7 +244,7 @@ var nkGestures =
 				var actname = null;
 				if (Math.pow(offsetX,2) + Math.pow(offsetY,2) > 30)
 				{
-					//console.log('Mouse Move:' + event.clientX + ':' + event.clientY );
+					console.log('Mouse Move:' + event.clientX + ':' + event.clientY );
 					this.isRightClickDisable = true;
 					var tan = offsetY / offsetX;
 					if(Math.abs(offsetY) > Math.abs(offsetX))
@@ -489,31 +505,37 @@ function string2array(string,array) {
 		i++;
 	}
 }
-
-chrome.extension.onConnect.addListener(function (port) {
-	if(port.name != "nkGesturesTab")
-		return;
-	port.onMessage.addListener(function (message) {
-		if ( message == 'OpenDrag' ) {
-			nkGestures.isOpenDrag = true;
-		}
-		else if( message == 'OpenHint' )
-		{
-			nkGestures.isOpenHint = true;
-		}
-		else if( message == 'isEnglish' )
-		{
-			nkGestures.isEnglish = true;
-		}
-		else{
-			string2array(message,nkGestures.actionsConfig );
-		}
+/*
+function listenMsg(){
+	chrome.extension.onConnect.addListener(function (port) {
+		if(port.name != "nkGesturesTab")
+			return;
+		port.onMessage.addListener(function (message) {
+			if( message.name == 'MouseEvent' ){
+				nkGestures.handleEvent( message );
+			}
+		});
 	});
-});
-
+}
+	
+function nkPostEvent( event )
+{
+	var xy = { name:'MouseEvent', type:event.type, button:event.button, clientX:event.clientX, clientY:event.clientY };
+	nkGestures.connection.postMessage( xy );
+}
+*/
 //initialize nkGestures Object
+window.captureEvents(Event.MouseDown|Event.MouseMove|Event.MouseUp);
+nkGestures.init();
+/*
 if ( window.parent == window ) {
 	window.captureEvents(Event.MouseDown|Event.MouseMove|Event.MouseUp);
 	nkGestures.init();
 //	window.addEventListener('unload', function(){ nkGestures.uninit(); }, false);
+}else{
+	nkGestures.connection = chrome.extension.connect({name : "nkGestures"});
+	window.addEventListener('mousedown', nkPostEvent, false);
+	window.addEventListener('mousemove', nkPostEvent, false);
+	window.addEventListener('mouseup', nkPostEvent, false);
 }
+*/
