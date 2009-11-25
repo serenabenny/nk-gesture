@@ -121,27 +121,27 @@ var nkToolStrip = {
 		else this.isOpenInFront = false;
 		
 		if (localStorage[this.gesturesName]) {
-		    this.actionsConfig = localStorage[this.gesturesName];
+			this.actionsConfig = localStorage[this.gesturesName];
 		}else{
-		    localStorage[this.gesturesName] = this.actionsConfig;
+			localStorage[this.gesturesName] = this.actionsConfig;
 		}
 		
-        if (localStorage[this.searchWebName]) {
-            this.searchWeb = localStorage[this.searchWebName];
+		if (localStorage[this.searchWebName]) {
+			this.searchWeb = localStorage[this.searchWebName];
 		}else{
-		    localStorage[this.searchWebName] = this.searchWeb;
+			localStorage[this.searchWebName] = this.searchWeb;
 		}
 		
-        if (localStorage[this.homePage_name]) {
-            this.homePage = localStorage[this.homePage_name];
+		if (localStorage[this.homePage_name]) {
+			this.homePage = localStorage[this.homePage_name];
 		}else{
-		    localStorage[this.homePage_name] = this.homePage;
+			localStorage[this.homePage_name] = this.homePage;
 		}
 		
-        if (localStorage[this.active_direction_name]) {
-            this.activeDirection = localStorage[this.active_direction_name];
+		if (localStorage[this.active_direction_name]) {
+			this.activeDirection = localStorage[this.active_direction_name];
 		}else{
-		    localStorage[this.active_direction_name] = this.activeDirection;
+			localStorage[this.active_direction_name] = this.activeDirection;
 		}	
 	}
 	
@@ -175,10 +175,10 @@ chrome.extension.onConnect.addListener(
 						break;
 					default:
 						break;
-					}
+				}
 
-					switch(message)
-					{
+				switch(message)
+				{
 						case "do:newtab":
 							newTab = {'windowId':port.tab.windowId, 'url':'chrome://newtab/', 'selected':true};
 							if(nkToolStrip.isOpenToRight)
@@ -274,10 +274,17 @@ chrome.extension.onConnect.addListener(
 					default:
 						break;
 				}
+				/*
+				if( message.name == 'MouseEvent' )
+				{
+					var connection = chrome.tabs.connect(port.tab.id,{name : "nkGesturesTab"});
+					connection.postMessage( message );
+				}
+				*/
 			}
 		);
 //发送用户定义的手势到连接来的tabs
-
+/*
 		var connection = chrome.tabs.connect(port.tab.id,{name : "nkGesturesTab"});
 		connection.postMessage(nkToolStrip.actionsConfig);
 		if ( nkToolStrip.isOpenDrag == true ) {
@@ -287,6 +294,16 @@ chrome.extension.onConnect.addListener(
 			connection.postMessage('OpenHint');
 			if(nkToolStrip.isEnglish)
 				connection.postMessage('isEnglish');
+		}
+		*/
+		port.postMessage(nkToolStrip.actionsConfig);
+		if ( nkToolStrip.isOpenDrag == true ) {
+			port.postMessage('OpenDrag');
+		}
+		if ( nkToolStrip.isOpenHint == true ) {
+			port.postMessage('OpenHint');
+			if(nkToolStrip.isEnglish == true )
+				port.postMessage('isEnglish');
 		}
 	}
 );
